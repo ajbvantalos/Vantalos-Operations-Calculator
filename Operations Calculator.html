@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Commission & Prospect Calculator</title>
+  <meta name="description" content="Calculate required active carriers and top-of-funnel contacts to hit a target commission with a clearly sectioned, accessible UI." />
+  <style>
+    :root{
+      --bg:#0b0c10;--panel:#12131a;--panel-2:#0f111a;--accent:#d3b99c;--muted:#a7b0c0;--text:#e8eef9;--danger:#ff6b6b;--ok:#8aff80;--border:#1f2335;--border-2:#22263e;--shadow:0 10px 40px rgba(0,0,0,.35);--radius:14px;--focus:0 0 0 4px color-mix(in oklab,var(--accent)22%,transparent 78%);
+    }
+    @media (prefers-color-scheme:light){:root{--bg:#f7f8fb;--panel:#ffffff;--panel-2:#f6f7fb;--text:#0d1321;--muted:#627091;--border:#e5e8f1;--border-2:#dfe3ee;--shadow:0 6px 28px rgba(20,23,40,.08)}}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background:radial-gradient(1200px 800px at 80% -10%,#1f2440 0%,var(--bg) 60%);color:var(--text);display:grid;place-items:start center;padding:2rem 1rem}
+    .app{width:100%;max-width:920px;background:color-mix(in oklab,var(--panel) 92%,white 8%);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+    header[role=banner]{padding:1.25rem 1.25rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in oklab,var(--accent)12%,transparent 88%)}
+    h1{font-size:1.28rem;margin:0;letter-spacing:.2px}
+    .sub{margin:0;color:var(--muted);font-size:.95rem}
+
+    /* Layout */
+    .container{display:grid;gap:1rem;padding:1.25rem}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    @media (max-width: 880px){.two-col{grid-template-columns:1fr}}
+
+    .section{border:1px solid var(--border);border-radius:16px;background:var(--panel-2)}
+    .section header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.9rem 1rem;border-bottom:1px dashed var(--border-2);background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
+    .section h2{font-size:1.05rem;margin:0;letter-spacing:.2px}
+    .section .body{padding:1rem}
+
+    .field{background:transparent;border:1px solid var(--border-2);border-radius:12px;padding:.9rem}
+    .label{display:flex;justify-content:space-between;gap:.5rem;align-items:baseline}
+    .label .name{font-size:.95rem;color:color-mix(in oklab,var(--text) 92%,white 8%)}
+    .label .hint{font-size:.8rem;color:var(--muted)}
+    .input-wrap{position:relative;margin-top:.55rem}
+    input[type=number],input[data-kind=percent],input[data-kind=money]{width:100%;padding:.78rem .9rem;border-radius:10px;border:1px solid var(--border-2);background:#0b0d16;color:var(--text);font-size:1rem;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
+    @media (prefers-color-scheme:light){input[type=number],input[data-kind=percent],input[data-kind=money]{background:white;color:#0d1321}}
+    input:focus-visible{border-color:var(--accent);box-shadow:var(--focus)}
+    input[aria-invalid=true]{border-color:color-mix(in oklab,var(--danger)60%,black 40%)}
+    .suffix{position:absolute;right:.6rem;top:50%;translate:0 -50%;font-size:.9rem;color:var(--muted);pointer-events:none}
+
+    .grid{display:grid;gap:.9rem;grid-template-columns:1fr 1fr}
+    @media (max-width: 580px){.grid{grid-template-columns:1fr}}
+
+    .row{display:flex;gap:.75rem;flex-wrap:wrap;padding:0 1.25rem 1.25rem}
+    button{appearance:none;border:0;border-radius:12px;padding:.85rem 1rem;font-weight:600;cursor:pointer;font-size:1rem;transition:transform .02s ease,box-shadow .2s ease,background .2s ease,color .2s ease}
+    .btn-primary{background:var(--accent);color:#06121a;box-shadow:0 8px 22px rgba(211,185,156,.25)}
+    .btn-primary:active{transform:translateY(1px)}
+    .btn-ghost{background:var(--panel-2);color:inherit;border:1px solid var(--border-2)}
+    .btn-link{background:transparent;color:var(--muted);padding:.5rem .25rem}
+    .btn-link:hover{text-decoration:underline}
+
+    .error{display:none;margin:0 1.25rem 1.25rem;padding:.8rem 1rem;border-radius:12px;border:1px solid color-mix(in oklab,var(--danger) 40%,black 60%);background:color-mix(in oklab,var(--danger) 18%,black 82%);color:#ffdcdc}
+
+    .kv-grid{display:grid;gap:.75rem}
+    .kv{display:grid;grid-template-columns:220px 1fr;gap:.5rem;align-items:center;border:1px solid var(--border-2);border-radius:12px;padding:.7rem 1rem;background:#0b0d16}
+    .kv .k{color:var(--muted);font-size:.92rem}
+    .kv .v{font-size:1.05rem}
+    @media (max-width:560px){.kv{grid-template-columns:1fr}.kv .k{margin-bottom:.25rem}}
+
+    .pill{display:inline-flex;gap:.5rem;align-items:center;border:1px solid var(--border-2);border-radius:999px;padding:.35rem .6rem;background:rgba(255,255,255,.02);font-size:.85rem;color:var(--muted)}
+    .pill b{color:var(--text)}
+
+    .rec{margin-top:.2rem;padding:1rem;border-radius:12px;border:1px dashed var(--border-2);background:#0b0d16}
+    .rec b{color:var(--ok)}
+
+    footer{padding:.9rem 1.25rem 1.25rem;color:var(--muted);font-size:.85rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between}
+    code.inline{background:var(--panel-2);padding:.15rem .4rem;border-radius:6px;border:1px solid var(--border-2)}
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="Commission & Prospect Calculator">
+    <header role="banner">
+      <div class="dot" aria-hidden="true"></div>
+      <div>
+        <h1>Commission & Prospect Calculator</h1>
+        <p class="sub">Clearly separated sections: Inputs → Commission Summary → Carrier Counts → Funnel Requirements → Recommendation.</p>
+      </div>
+    </header>
+
+    <div class="container">
+      <!-- Inputs (two columns on wide screens) -->
+      <section class="section" aria-labelledby="inputs-title">
+        <header>
+          <h2 id="inputs-title">1) Inputs</h2>
+          <span class="pill"><b>Tip</b> Enter % as 15 or 0.15</span>
+        </header>
+        <div class="body two-col">
+          <div class="grid" role="group" aria-label="Commission inputs">
+            <div class="field">
+              <div class="label"><label class="name" for="revenuePerCarrier">Revenue per active carrier</label><span class="hint">$ / carrier / month</span></div>
+              <div class="input-wrap"><input id="revenuePerCarrier" type="number" inputmode="decimal" min="0" step="any" value="800" autocomplete="off"><span class="suffix" aria-hidden="true">USD</span></div>
+            </div>
+            <div class="field">
+              <div class="label"><label class="name" for="threshold">Threshold for commission</label><span class="hint">$ threshold</span></div>
+              <div class="input-wrap"><input id="threshold" type="number" inputmode="decimal" min="0" step="any" value="3100" autocomplete="off"><span class="suffix" aria-hidden="true">USD</span></div>
+            </div>
+            <div class="field">
+              <div class="label"><label class="name" for="commissionRate">Commission rate</label><span class="hint">enter 15 or 0.15</span></div>
+              <div class="input-wrap"><input id="commissionRate" type="number" inputmode="decimal" step="any" value="15" data-kind="percent" autocomplete="off"><span class="suffix" aria-hidden="true">%</span></div>
+            </div>
+            <div class="field">
+              <div class="label"><label class="name" for="targetCommission">Target commission</label><span class="hint">$ target</span></div>
+              <div class="input-wrap"><input id="targetCommission" type="number" inputmode="decimal" min="0" step="any" value="2000" data-kind="money" autocomplete="off"><span class="suffix" aria-hidden="true">USD</span></div>
+            </div>
+          </div>
+          <div class="grid" role="group" aria-label="Funnel inputs">
+            <div class="field">
+              <div class="label"><label class="name" for="contactToEngaged">Contact → Engaged rate</label><span class="hint">enter 20 or 0.20</span></div>
+              <div class="input-wrap"><input id="contactToEngaged" type="number" inputmode="decimal" step="any" value="20" data-kind="percent"><span class="suffix" aria-hidden="true">%</span></div>
+            </div>
+            <div class="field">
+              <div class="label"><label class="name" for="engagedToOnboarded">Engaged → Onboarded rate</label><span class="hint">enter 50 or 0.50</span></div>
+              <div class="input-wrap"><input id="engagedToOnboarded" type="number" inputmode="decimal" step="any" value="50" data-kind="percent"><span class="suffix" aria-hidden="true">%</span></div>
+            </div>
+            <div class="field">
+              <div class="label"><label class="name" for="onboardedToActive">Onboarded → Active rate</label><span class="hint">enter 70 or 0.70</span></div>
+              <div class="input-wrap"><input id="onboardedToActive" type="number" inputmode="decimal" step="any" value="70" data-kind="percent"><span class="suffix" aria-hidden="true">%</span></div>
+            </div>
+            <div class="field">
+              <div class="label"><label class="name" for="contactBuffer">Contact buffer rate</label><span class="hint">enter 20 or 0.20</span></div>
+              <div class="input-wrap"><input id="contactBuffer" type="number" inputmode="decimal" step="any" value="20" data-kind="percent"><span class="suffix" aria-hidden="true">%</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <div class="row" role="group" aria-label="Actions">
+        <button class="btn-primary" id="btnCalc" type="button">Calculate</button>
+        <button class="btn-ghost" id="btnReset" type="button">Reset to defaults</button>
+        <button class="btn-link" id="btnShare" type="button" aria-label="Copy a sharable link">Copy shareable link</button>
+        <button class="btn-link" id="btnExport" type="button" aria-label="Export settings as JSON">Export</button>
+        <button class="btn-link" id="btnImport" type="button" aria-label="Import settings from JSON">Import</button>
+      </div>
+
+      <div id="error" class="error" role="alert" aria-live="polite"></div>
+
+      <!-- Results: now split into clear sections -->
+      <section class="section" id="commission-summary" aria-labelledby="commission-title" hidden>
+        <header>
+          <h2 id="commission-title">2) Commission Summary</h2>
+          <span class="pill"><b>Target</b> <span id="pillTarget">—</span></span>
+        </header>
+        <div class="body kv-grid">
+          <div class="kv"><div class="k">Exact carriers needed</div><div class="v" id="exactN">–</div></div>
+          <div class="kv"><div class="k">With <span id="nFloor">–</span> carriers</div><div class="v">Revenue: <span id="revFloor">–</span> · Commission: <span id="comFloor">–</span></div></div>
+          <div class="kv"><div class="k">With <span id="nCeil">–</span> carriers</div><div class="v">Revenue: <span id="revCeil">–</span> · Commission: <span id="comCeil">–</span></div></div>
+        </div>
+      </section>
+
+      <section class="section" id="carrier-counts" aria-labelledby="carrier-title" hidden>
+        <header>
+          <h2 id="carrier-title">3) Carrier Counts</h2>
+          <span class="pill">Rev / carrier: <b id="pillRpc">—</b></span>
+        </header>
+        <div class="body kv-grid">
+          <div class="kv"><div class="k">Recommended carriers</div><div class="v" id="nRecommend">–</div></div>
+          <div class="kv"><div class="k">Threshold</div><div class="v" id="pillThr">—</div></div>
+          <div class="kv"><div class="k">Commission rate</div><div class="v" id="pillRate">—</div></div>
+        </div>
+      </section>
+
+      <section class="section" id="funnel-reqs" aria-labelledby="funnel-title" hidden>
+        <header>
+          <h2 id="funnel-title">4) Funnel Requirements</h2>
+          <span class="pill">Rates: C→E <b id="pillC2E">—</b> · E→O <b id="pillE2O">—</b> · O→A <b id="pillO2A">—</b> · Buffer <b id="pillBuf">—</b></span>
+        </header>
+        <div class="body kv-grid">
+          <div class="kv"><div class="k">Base contacts (no buffer)</div><div class="v" id="contactsBase">–</div></div>
+          <div class="kv"><div class="k">Contacts with buffer</div><div class="v" id="contactsBuffer">–</div></div>
+        </div>
+      </section>
+
+      <section class="section" id="recommendation" aria-labelledby="rec-title" hidden>
+        <header>
+          <h2 id="rec-title">5) Recommendation</h2>
+          <span class="pill">Actionable summary</span>
+        </header>
+        <div class="body">
+          <div class="rec" id="recText">—</div>
+        </div>
+      </section>
+
+      <footer>
+        <span>Formula: carriers → prospects = carriers ÷ (C→E × E→O × O→A), then × (1 + buffer).</span>
+        <span id="toast" aria-live="polite"></span>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    const $ = (id)=>document.getElementById(id);
+    const fmtMoney=(x)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(x);
+    const clamp2=(x)=>Math.round((x+Number.EPSILON)*100)/100;
+    const normPercent=(v)=>!Number.isFinite(v)?NaN:(v>1?v/100:(v<0?NaN:v));
+
+    function showError(msg){const el=$('error');el.textContent=msg;el.style.display='block';for(const sec of ['commission-summary','carrier-counts','funnel-reqs','recommendation']){$(sec).hidden=true;}}
+    function clearError(){const el=$('error');el.textContent='';el.style.display='none';}
+
+    function calcCommission(n,rpc,thr,rate){const revenue=n*rpc;return{revenue,commission:Math.max(0,revenue-thr)*rate};}
+
+    function compute(p){
+      const rate=normPercent(p.ratePct),c2e=normPercent(p.c2ePct),e2o=normPercent(p.e2oPct),o2a=normPercent(p.o2aPct),buf=normPercent(p.bufPct);
+      if([p.rpc,p.thr,p.target].some(v=>!Number.isFinite(v))) throw new Error('Money inputs must be numbers.');
+      if([rate,c2e,e2o,o2a,buf].some(v=>!Number.isFinite(v))) throw new Error('Rates must be valid percentages.');
+      if(p.rpc<=0) throw new Error('Revenue per carrier must be > 0.');
+      if(p.thr<0) throw new Error('Threshold cannot be negative.');
+      if(rate<=0) throw new Error('Commission rate must be > 0%.');
+      if(p.target<0) throw new Error('Target commission cannot be negative.');
+      if([c2e,e2o,o2a].some(v=>v<=0||v>1)) throw new Error('Funnel rates must be > 0% and ≤ 100%.');
+      if(buf<0) throw new Error('Buffer cannot be negative.');
+
+      const excessNeeded=p.target/rate;
+      const totalRevNeeded=excessNeeded+p.thr;
+      const nFloat=totalRevNeeded/p.rpc; if(!Number.isFinite(nFloat)||nFloat<=0) throw new Error('Target unreachable with current inputs.');
+
+      const nFloor=Math.floor(nFloat),nCeil=Math.ceil(nFloat);
+      const floorRes=calcCommission(nFloor,p.rpc,p.thr,rate),ceilRes=calcCommission(nCeil,p.rpc,p.thr,rate);
+      const recommend=floorRes.commission>=p.target?nFloor:nCeil;
+
+      const contactsBase=nFloat/(c2e*e2o*o2a);
+      const contactsWithBuf=contactsBase*(1+buf);
+
+      return{nFloat,nFloor,nCeil,floorRes,ceilRes,recommend,contactsBase,contactsWithBuf,rate,c2e,e2o,o2a,buf};
+    }
+
+    const KEY='commission-prospect-calculator:v2';
+    function getForm(){return{rpc:parseFloat($('revenuePerCarrier').value),thr:parseFloat($('threshold').value),ratePct:parseFloat($('commissionRate').value),target:parseFloat($('targetCommission').value),c2ePct:parseFloat($('contactToEngaged').value),e2oPct:parseFloat($('engagedToOnboarded').value),o2aPct:parseFloat($('onboardedToActive').value),bufPct:parseFloat($('contactBuffer').value)}}
+    function setForm(s){$('revenuePerCarrier').value=s.rpc;$('threshold').value=s.thr;$('commissionRate').value=s.ratePct;$('targetCommission').value=s.target;$('contactToEngaged').value=s.c2ePct;$('engagedToOnboarded').value=s.e2oPct;$('onboardedToActive').value=s.o2aPct;$('contactBuffer').value=s.bufPct}
+    function readState(){try{const raw=localStorage.getItem(KEY);if(raw) return JSON.parse(raw);}catch{}return{rpc:800,thr:3100,ratePct:15,target:2000,c2ePct:20,e2oPct:50,o2aPct:70,bufPct:20}}
+    function writeState(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}}
+
+    function validateInline(){const s=getForm();const checks=[['revenuePerCarrier',s.rpc>0],['threshold',s.thr>=0],['commissionRate',normPercent(s.ratePct)>0],['targetCommission',s.target>=0],['contactToEngaged',(normPercent(s.c2ePct)>0&&normPercent(s.c2ePct)<=1)],['engagedToOnboarded',(normPercent(s.e2oPct)>0&&normPercent(s.e2oPct)<=1)],['onboardedToActive',(normPercent(s.o2aPct)>0&&normPercent(s.o2aPct)<=1)],['contactBuffer',normPercent(s.bufPct)>=0]];for(const[id,ok]of checks){$(id).setAttribute('aria-invalid',ok?'false':'true')}}
+
+    function render(p, r){
+      // Reveal section blocks
+      for(const sec of ['commission-summary','carrier-counts','funnel-reqs','recommendation']){$(sec).hidden=false}
+      // Commission summary
+      $('pillTarget').textContent=fmtMoney(p.target);
+      $('exactN').textContent=r.nFloat.toFixed(2);
+      $('nFloor').textContent=r.nFloor; $('revFloor').textContent=fmtMoney(clamp2(r.nFloor*p.rpc)); $('comFloor').textContent=fmtMoney(clamp2(r.floorRes.commission));
+      $('nCeil').textContent=r.nCeil; $('revCeil').textContent=fmtMoney(clamp2(r.nCeil*p.rpc)); $('comCeil').textContent=fmtMoney(clamp2(r.ceilRes.commission));
+      // Carrier counts
+      $('nRecommend').textContent=r.recommend; $('pillRpc').textContent=fmtMoney(p.rpc); $('pillThr').textContent=fmtMoney(p.thr); $('pillRate').textContent=`${(r.rate*100).toFixed(2)}%`;
+      // Funnel
+      $('pillC2E').textContent=`${(r.c2e*100).toFixed(1)}%`; $('pillE2O').textContent=`${(r.e2o*100).toFixed(1)}%`; $('pillO2A').textContent=`${(r.o2a*100).toFixed(1)}%`; $('pillBuf').textContent=`${(r.buf*100).toFixed(1)}%`;
+      $('contactsBase').textContent=Math.max(0,Math.round(r.contactsBase)); $('contactsBuffer').textContent=Math.max(0,Math.round(r.contactsWithBuf));
+      // Recommendation
+      $('recText').innerHTML=`You need at least <b>${r.recommend}</b> active carriers and about <b>${Math.round(r.contactsWithBuf)}</b> contacts (incl. buffer) to hit a <b>${fmtMoney(p.target)}</b> commission.`;
+    }
+
+    function handleCalc(){clearError();try{const s=getForm();writeState(s);validateInline();const r=compute(s);render(s,r);}catch(e){showError(e.message)}}
+    function handleReset(){const d={rpc:800,thr:3100,ratePct:15,target:2000,c2ePct:20,e2oPct:50,o2aPct:70,bufPct:20};setForm(d);writeState(d);clearError();for(const sec of ['commission-summary','carrier-counts','funnel-reqs','recommendation']){$(sec).hidden=true}}
+
+    function copyShareLink(){const s=getForm();writeState(s);navigator.clipboard?.writeText(location.href).catch(()=>{});}
+    function exportJSON(){const s=getForm();const blob=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='commission-calculator-settings.json';a.click();URL.revokeObjectURL(url)}
+    function importJSON(){const i=document.createElement('input');i.type='file';i.accept='application/json';i.onchange=()=>{const f=i.files?.[0];if(!f) return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(String(r.result));setForm(s);writeState(s);}catch{}};r.readAsText(f)};i.click()}
+
+    // Init
+    (function init(){const state=readState();setForm(state);validateInline();document.getElementById('btnCalc').addEventListener('click',handleCalc);document.getElementById('btnReset').addEventListener('click',handleReset);document.getElementById('btnShare').addEventListener('click',copyShareLink);document.getElementById('btnExport').addEventListener('click',exportJSON);document.getElementById('btnImport').addEventListener('click',importJSON);})();
+  </script>
+</body>
+</html>
