@@ -3,263 +3,368 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Commission & Prospect Calculator</title>
-  <meta name="description" content="Calculate required active carriers and top-of-funnel contacts to hit a target commission with a clearly sectioned, accessible UI." />
+  <title>Unit Economics Planner — Clean Layout</title>
   <style>
     :root{
-      --bg:#0b0c10;--panel:#12131a;--panel-2:#0f111a;--accent:#d3b99c;--muted:#a7b0c0;--text:#e8eef9;--danger:#ff6b6b;--ok:#8aff80;--border:#1f2335;--border-2:#22263e;--shadow:0 10px 40px rgba(0,0,0,.35);--radius:14px;--focus:0 0 0 4px color-mix(in oklab,var(--accent)22%,transparent 78%);
+      --bg:#0b0c10; --surface:#131827; --surface-2:#1a2133; --surface-3:#212a41;
+      --text:#eef0f4; --muted:#9ea6ba; --accent:#d3b99c; --border:#2a3350;
+      --ok:#2ecc71; --warn:#f39c12; --bad:#e74c3c; --radius:14px; --shadow:0 8px 28px rgba(0,0,0,.4);
     }
-    @media (prefers-color-scheme:light){:root{--bg:#f7f8fb;--panel:#ffffff;--panel-2:#f6f7fb;--text:#0d1321;--muted:#627091;--border:#e5e8f1;--border-2:#dfe3ee;--shadow:0 6px 28px rgba(20,23,40,.08)}}
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,"Noto Sans","Apple Color Emoji","Segoe UI Emoji";-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;background:radial-gradient(1200px 800px at 80% -10%,#1f2440 0%,var(--bg) 60%);color:var(--text);display:grid;place-items:start center;padding:2rem 1rem}
-    .app{width:100%;max-width:920px;background:color-mix(in oklab,var(--panel) 92%,white 8%);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
-    header[role=banner]{padding:1.25rem 1.25rem .75rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
-    .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in oklab,var(--accent)12%,transparent 88%)}
-    h1{font-size:1.28rem;margin:0;letter-spacing:.2px}
-    .sub{margin:0;color:var(--muted);font-size:.95rem}
+    html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
+    h1{font-size:1.6rem;margin:0}
+    h2{font-size:1rem;color:var(--muted);margin:.2rem 0 .6rem}
+    h3{font-size:.95rem;color:var(--accent);margin:0 0 .4rem}
+    p{margin:.2rem 0;color:var(--muted)}
 
-    /* Layout */
-    .container{display:grid;gap:1rem;padding:1.25rem}
-    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
-    @media (max-width: 880px){.two-col{grid-template-columns:1fr}}
+    .app{max-width:1200px;margin:0 auto;padding:18px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .brand{display:flex;gap:10px;align-items:center}
+    .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 6px #d3b99c22}
 
-    .section{border:1px solid var(--border);border-radius:16px;background:var(--panel-2)}
-    .section header{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.9rem 1rem;border-bottom:1px dashed var(--border-2);background:linear-gradient(180deg,rgba(255,255,255,.02),transparent)}
-    .section h2{font-size:1.05rem;margin:0;letter-spacing:.2px}
-    .section .body{padding:1rem}
+    /* Layout: left inputs / right results */
+    .layout{display:grid;grid-template-columns:340px 1fr;gap:14px}
+    @media (max-width:980px){.layout{grid-template-columns:1fr}}
 
-    .field{background:transparent;border:1px solid var(--border-2);border-radius:12px;padding:.9rem}
-    .label{display:flex;justify-content:space-between;gap:.5rem;align-items:baseline}
-    .label .name{font-size:.95rem;color:color-mix(in oklab,var(--text) 92%,white 8%)}
-    .label .hint{font-size:.8rem;color:var(--muted)}
-    .input-wrap{position:relative;margin-top:.55rem}
-    input[type=number],input[data-kind=percent],input[data-kind=money]{width:100%;padding:.78rem .9rem;border-radius:10px;border:1px solid var(--border-2);background:#0b0d16;color:var(--text);font-size:1rem;outline:none;transition:border-color .2s,box-shadow .2s,background .2s}
-    @media (prefers-color-scheme:light){input[type=number],input[data-kind=percent],input[data-kind=money]{background:white;color:#0d1321}}
-    input:focus-visible{border-color:var(--accent);box-shadow:var(--focus)}
-    input[aria-invalid=true]{border-color:color-mix(in oklab,var(--danger)60%,black 40%)}
-    .suffix{position:absolute;right:.6rem;top:50%;translate:0 -50%;font-size:.9rem;color:var(--muted);pointer-events:none}
+    .panel{background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+    .panel .inner{padding:14px}
 
-    .grid{display:grid;gap:.9rem;grid-template-columns:1fr 1fr}
-    @media (max-width: 580px){.grid{grid-template-columns:1fr}}
+    /* Inputs sidebar */
+    .group{border-top:1px solid var(--border)}
+    .group:first-child{border-top:0}
+    .group header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer}
+    .group header:hover{background:var(--surface-3)}
+    .group header h3{margin:0}
+    .group .body{padding:0 14px 14px}
+    .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    @media (max-width:520px){.grid-2{grid-template-columns:1fr}}
 
-    .row{display:flex;gap:.75rem;flex-wrap:wrap;padding:0 1.25rem 1.25rem}
-    button{appearance:none;border:0;border-radius:12px;padding:.85rem 1rem;font-weight:600;cursor:pointer;font-size:1rem;transition:transform .02s ease,box-shadow .2s ease,background .2s ease,color .2s ease}
-    .btn-primary{background:var(--accent);color:#06121a;box-shadow:0 8px 22px rgba(211,185,156,.25)}
-    .btn-primary:active{transform:translateY(1px)}
-    .btn-ghost{background:var(--panel-2);color:inherit;border:1px solid var(--border-2)}
-    .btn-link{background:transparent;color:var(--muted);padding:.5rem .25rem}
-    .btn-link:hover{text-decoration:underline}
+    label{font-size:.82rem;color:var(--muted)}
+    input,select{width:100%;border:1px solid var(--border);background:#161d2d;color:var(--text);padding:10px;border-radius:10px;font-size:.95rem;outline:none;transition:.2s}
+    input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #d3b99c33}
 
-    .error{display:none;margin:0 1.25rem 1.25rem;padding:.8rem 1rem;border-radius:12px;border:1px solid color-mix(in oklab,var(--danger) 40%,black 60%);background:color-mix(in oklab,var(--danger) 18%,black 82%);color:#ffdcdc}
+    /* Results */
+    .results{display:grid;grid-template-rows:auto auto 1fr;gap:14px}
 
-    .kv-grid{display:grid;gap:.75rem}
-    .kv{display:grid;grid-template-columns:220px 1fr;gap:.5rem;align-items:center;border:1px solid var(--border-2);border-radius:12px;padding:.7rem 1rem;background:#0b0d16}
-    .kv .k{color:var(--muted);font-size:.92rem}
-    .kv .v{font-size:1.05rem}
-    @media (max-width:560px){.kv{grid-template-columns:1fr}.kv .k{margin-bottom:.25rem}}
+    .toolbar{display:flex;gap:8px;align-items:center}
+    button{border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
+    .btn{background:var(--accent);color:#16181f}
+    .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border);font-weight:600}
 
-    .pill{display:inline-flex;gap:.5rem;align-items:center;border:1px solid var(--border-2);border-radius:999px;padding:.35rem .6rem;background:rgba(255,255,255,.02);font-size:.85rem;color:var(--muted)}
-    .pill b{color:var(--text)}
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+    @media (max-width:800px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:520px){.kpi-grid{grid-template-columns:1fr}}
+    .kpi{background:var(--surface-3);border:1px solid var(--border);border-radius:12px;padding:10px}
+    .kpi .value{font-weight:800;font-size:1.3rem}
+    .kpi .label{font-size:.85rem;color:var(--muted)}
 
-    .rec{margin-top:.2rem;padding:1rem;border-radius:12px;border:1px dashed var(--border-2);background:#0b0d16}
-    .rec b{color:var(--ok)}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media (max-width:800px){.two-col{grid-template-columns:1fr}}
 
-    footer{padding:.9rem 1.25rem 1.25rem;color:var(--muted);font-size:.85rem;display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;justify-content:space-between}
-    code.inline{background:var(--panel-2);padding:.15rem .4rem;border-radius:6px;border:1px solid var(--border-2)}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .item{display:flex;justify-content:space-between;align-items:center;background:#1a2133;border:1px solid var(--border);border-radius:12px;padding:8px 10px}
+    .item input{min-width:0}
+
+    .tabbar{display:flex;gap:8px}
+    .tab{padding:6px 10px;border-radius:10px;border:1px solid var(--border);background:#1a2133;cursor:pointer}
+    .tab.active{background:#232b44}
+
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
   </style>
 </head>
 <body>
-  <div class="app" role="application" aria-label="Commission & Prospect Calculator">
-    <header role="banner">
-      <div class="dot" aria-hidden="true"></div>
-      <div>
-        <h1>Commission & Prospect Calculator</h1>
-        <p class="sub">Clearly separated sections: Inputs → Commission Summary → Carrier Counts → Funnel Requirements → Recommendation.</p>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand"><div class="dot"></div><div><h1>Unit Economics Planner</h1><h2>Order: Inputs → Summary KPIs → Details. Accuracy first.</h2></div></div>
+      <div class="toolbar">
+        <select id="currency"><option value="USD">$ USD</option><option value="GBP">£ GBP</option></select>
+        <input id="fx" type="number" step="0.0001" value="0.78" title="FX (1 USD → GBP)"/>
+        <button class="btn" id="recalc">Recalculate</button>
+        <button class="btn ghost" id="export">Export JSON</button>
+        <button class="btn ghost" id="import">Import JSON</button>
+        <button class="btn ghost" id="resetAll">Reset</button>
       </div>
-    </header>
+    </div>
 
-    <div class="container">
-      <!-- Inputs (two columns on wide screens) -->
-      <section class="section" aria-labelledby="inputs-title">
-        <header>
-          <h2 id="inputs-title">1) Inputs</h2>
-          <span class="pill"><b>Tip</b> Enter % as 15 or 0.15</span>
-        </header>
-        <div class="body two-col">
-          <div class="grid" role="group" aria-label="Commission inputs">
-            <div class="field">
-              <div class="label"><label class="name" for="revenuePerCarrier">Revenue per active carrier</label><span class="hint">$ / carrier / month</span></div>
-              <div class="input-wrap"><input id="revenuePerCarrier" type="number" inputmode="decimal" min="0" step="any" value="800" autocomplete="off"><span class="suffix" aria-hidden="true">USD</span></div>
-            </div>
-            <div class="field">
-              <div class="label"><label class="name" for="threshold">Threshold for commission</label><span class="hint">$ threshold</span></div>
-              <div class="input-wrap"><input id="threshold" type="number" inputmode="decimal" min="0" step="any" value="3100" autocomplete="off"><span class="suffix" aria-hidden="true">USD</span></div>
-            </div>
-            <div class="field">
-              <div class="label"><label class="name" for="commissionRate">Commission rate</label><span class="hint">enter 15 or 0.15</span></div>
-              <div class="input-wrap"><input id="commissionRate" type="number" inputmode="decimal" step="any" value="15" data-kind="percent" autocomplete="off"><span class="suffix" aria-hidden="true">%</span></div>
-            </div>
-            <div class="field">
-              <div class="label"><label class="name" for="targetCommission">Target commission</label><span class="hint">$ target</span></div>
-              <div class="input-wrap"><input id="targetCommission" type="number" inputmode="decimal" min="0" step="any" value="2000" data-kind="money" autocomplete="off"><span class="suffix" aria-hidden="true">USD</span></div>
-            </div>
-          </div>
-          <div class="grid" role="group" aria-label="Funnel inputs">
-            <div class="field">
-              <div class="label"><label class="name" for="contactToEngaged">Contact → Engaged rate</label><span class="hint">enter 20 or 0.20</span></div>
-              <div class="input-wrap"><input id="contactToEngaged" type="number" inputmode="decimal" step="any" value="20" data-kind="percent"><span class="suffix" aria-hidden="true">%</span></div>
-            </div>
-            <div class="field">
-              <div class="label"><label class="name" for="engagedToOnboarded">Engaged → Onboarded rate</label><span class="hint">enter 50 or 0.50</span></div>
-              <div class="input-wrap"><input id="engagedToOnboarded" type="number" inputmode="decimal" step="any" value="50" data-kind="percent"><span class="suffix" aria-hidden="true">%</span></div>
-            </div>
-            <div class="field">
-              <div class="label"><label class="name" for="onboardedToActive">Onboarded → Active rate</label><span class="hint">enter 70 or 0.70</span></div>
-              <div class="input-wrap"><input id="onboardedToActive" type="number" inputmode="decimal" step="any" value="70" data-kind="percent"><span class="suffix" aria-hidden="true">%</span></div>
-            </div>
-            <div class="field">
-              <div class="label"><label class="name" for="contactBuffer">Contact buffer rate</label><span class="hint">enter 20 or 0.20</span></div>
-              <div class="input-wrap"><input id="contactBuffer" type="number" inputmode="decimal" step="any" value="20" data-kind="percent"><span class="suffix" aria-hidden="true">%</span></div>
+    <div class="layout">
+      <!-- LEFT: Inputs Sidebar (accordion groups) -->
+      <aside class="panel" aria-label="Inputs">
+        <div class="group" data-open="true">
+          <header><h3>Avenor Revenue</h3><span>per active carrier</span></header>
+          <div class="body">
+            <div class="grid-2">
+              <div><label for="revPerCarrier">Typical ($/carrier)</label><input id="revPerCarrier" type="number" value="800"></div>
+              <div><label for="revPerCarrierGood">Good month ($/carrier)</label><input id="revPerCarrierGood" type="number" value="1000"></div>
+              <div><label for="avenorPct">Avenor dispatch %</label><input id="avenorPct" type="number" step="0.1" value="5"></div>
+              <div><label for="avenorPctWhatIf">What‑if dispatch %</label><input id="avenorPctWhatIf" type="number" step="0.1" value="5"></div>
+              <div style="grid-column:1/3"><label for="useGood">Use good‑month revenue?</label><select id="useGood"><option value="no">No</option><option value="yes">Yes</option></select></div>
             </div>
           </div>
         </div>
-      </section>
 
-      <!-- Actions -->
-      <div class="row" role="group" aria-label="Actions">
-        <button class="btn-primary" id="btnCalc" type="button">Calculate</button>
-        <button class="btn-ghost" id="btnReset" type="button">Reset to defaults</button>
-        <button class="btn-link" id="btnShare" type="button" aria-label="Copy a sharable link">Copy shareable link</button>
-        <button class="btn-link" id="btnExport" type="button" aria-label="Export settings as JSON">Export</button>
-        <button class="btn-link" id="btnImport" type="button" aria-label="Import settings from JSON">Import</button>
-      </div>
-
-      <div id="error" class="error" role="alert" aria-live="polite"></div>
-
-      <!-- Results: now split into clear sections -->
-      <section class="section" id="commission-summary" aria-labelledby="commission-title" hidden>
-        <header>
-          <h2 id="commission-title">2) Commission Summary</h2>
-          <span class="pill"><b>Target</b> <span id="pillTarget">—</span></span>
-        </header>
-        <div class="body kv-grid">
-          <div class="kv"><div class="k">Exact carriers needed</div><div class="v" id="exactN">–</div></div>
-          <div class="kv"><div class="k">With <span id="nFloor">–</span> carriers</div><div class="v">Revenue: <span id="revFloor">–</span> · Commission: <span id="comFloor">–</span></div></div>
-          <div class="kv"><div class="k">With <span id="nCeil">–</span> carriers</div><div class="v">Revenue: <span id="revCeil">–</span> · Commission: <span id="comCeil">–</span></div></div>
+        <div class="group">
+          <header><h3>Commission</h3><span>thresholded</span></header>
+          <div class="body">
+            <div class="grid-2">
+              <div><label for="threshold">Threshold ($)</label><input id="threshold" type="number" value="3100"></div>
+              <div><label for="rate">Rate above threshold (%)</label><input id="rate" type="number" step="0.1" value="15"></div>
+              <div style="grid-column:1/3"><label for="targetCommission">Target commission ($)</label><input id="targetCommission" type="number" value="2700"></div>
+            </div>
+          </div>
         </div>
-      </section>
 
-      <section class="section" id="carrier-counts" aria-labelledby="carrier-title" hidden>
-        <header>
-          <h2 id="carrier-title">3) Carrier Counts</h2>
-          <span class="pill">Rev / carrier: <b id="pillRpc">—</b></span>
-        </header>
-        <div class="body kv-grid">
-          <div class="kv"><div class="k">Recommended carriers</div><div class="v" id="nRecommend">–</div></div>
-          <div class="kv"><div class="k">Threshold</div><div class="v" id="pillThr">—</div></div>
-          <div class="kv"><div class="k">Commission rate</div><div class="v" id="pillRate">—</div></div>
+        <div class="group">
+          <header><h3>Funnel</h3><span>pre‑data</span></header>
+          <div class="body">
+            <div class="grid-2">
+              <div><label for="pCE">Contact → Engaged (%)</label><input id="pCE" type="number" step="0.1" value="20"></div>
+              <div><label for="pEO">Engaged → Onboarded (%)</label><input id="pEO" type="number" step="0.1" value="50"></div>
+              <div><label for="pOA">Onboarded → Active (%)</label><input id="pOA" type="number" step="0.1" value="70"></div>
+              <div><label for="buffer">Buffer (%)</label><input id="buffer" type="number" step="0.1" value="20"></div>
+            </div>
+          </div>
         </div>
-      </section>
 
-      <section class="section" id="funnel-reqs" aria-labelledby="funnel-title" hidden>
-        <header>
-          <h2 id="funnel-title">4) Funnel Requirements</h2>
-          <span class="pill">Rates: C→E <b id="pillC2E">—</b> · E→O <b id="pillE2O">—</b> · O→A <b id="pillO2A">—</b> · Buffer <b id="pillBuf">—</b></span>
-        </header>
-        <div class="body kv-grid">
-          <div class="kv"><div class="k">Base contacts (no buffer)</div><div class="v" id="contactsBase">–</div></div>
-          <div class="kv"><div class="k">Contacts with buffer</div><div class="v" id="contactsBuffer">–</div></div>
+        <div class="group">
+          <header><h3>Costs</h3><span>editable</span></header>
+          <div class="body">
+            <h3>Fixed</h3>
+            <div id="fixedList" class="list" aria-live="polite"></div>
+            <div style="display:flex;gap:8px;margin:8px 0 12px"><button class="btn" id="addFixed">+ Add item</button><button class="btn ghost" id="resetFixed">Reset → $50 default</button></div>
+            <div class="grid-2">
+              <div class="item"><span>Monthlyized total</span><span class="mono" id="fixedMonthly"></span></div>
+              <div class="item"><span>Cash outflow this month</span><span class="mono" id="fixedThisMonth"></span></div>
+            </div>
+            <div style="height:10px"></div>
+            <h3>Variable</h3>
+            <div class="tabbar" style="margin:6px 0 8px">
+              <div class="tab active" data-tab="calls">AI Calls</div>
+              <div class="tab" data-tab="email">Email</div>
+            </div>
+            <div id="tabCalls">
+              <div class="grid-2">
+                <div><label for="costCallAttempt">Cost per call attempt ($)</label><input id="costCallAttempt" type="number" step="0.0001" value="0.40"></div>
+                <div><label for="attemptsPerReach">Attempts per human reach</label><input id="attemptsPerReach" type="number" step="0.1" value="1.5"></div>
+                <div><label>Cost per reached human (auto)</label><input id="costPerReach" type="number" disabled></div>
+                <div><label>Cost for required contacts (auto)</label><input id="costCallsTotal" type="text" disabled></div>
+              </div>
+            </div>
+            <div id="tabEmail" style="display:none">
+              <div class="grid-2">
+                <div><label for="costEmailSend">Cost per email send ($)</label><input id="costEmailSend" type="number" step="0.0001" value="0.003"></div>
+                <div><label for="sendsPerProspect">Sends per prospect</label><input id="sendsPerProspect" type="number" step="1" value="2"></div>
+                <div><label>Cost per contacted prospect (auto)</label><input id="costEmailPerContact" type="number" disabled></div>
+                <div><label>Cost for required contacts (auto)</label><input id="costEmailTotal" type="text" disabled></div>
+              </div>
+            </div>
+          </div>
         </div>
-      </section>
+      </aside>
 
-      <section class="section" id="recommendation" aria-labelledby="rec-title" hidden>
-        <header>
-          <h2 id="rec-title">5) Recommendation</h2>
-          <span class="pill">Actionable summary</span>
-        </header>
-        <div class="body">
-          <div class="rec" id="recText">—</div>
-        </div>
-      </section>
+      <!-- RIGHT: Results -->
+      <main class="results">
+        <!-- KPI header -->
+        <section class="panel"><div class="inner">
+          <h3>Summary KPIs</h3>
+          <div class="kpi-grid">
+            <div class="kpi"><div class="value mono" id="revPerCarrierDisplay"></div><div class="label">Revenue / carrier</div></div>
+            <div class="kpi"><div class="value mono" id="totalAvenorRevenue"></div><div class="label">Total Avenor revenue</div></div>
+            <div class="kpi"><div class="value mono" id="commissionOut"></div><div class="label">Our commission</div></div>
+            <div class="kpi"><div class="value mono" id="breakevenRevenue"></div><div class="label">Breakeven total revenue</div></div>
+          </div>
+        </div></section>
 
-      <footer>
-        <span>Formula: carriers → prospects = carriers ÷ (C→E × E→O × O→A), then × (1 + buffer).</span>
-        <span id="toast" aria-live="polite"></span>
-      </footer>
+        <!-- Compact strips (consistent placement) -->
+        <section class="two-col">
+          <div class="panel"><div class="inner">
+            <h3>Commission Snapshot</h3>
+            <div class="kpi-grid">
+              <div class="kpi"><div class="value mono" id="aboveThreshold"></div><div class="label">Region</div></div>
+              <div class="kpi"><div class="value mono" id="effectiveRate"></div><div class="label">Effective rate vs total</div></div>
+              <div class="kpi"><div class="value mono" id="aboveThreshAmount"></div><div class="label">Above threshold</div></div>
+              <div class="kpi"><div class="value mono" id="whatIfRev"></div><div class="label">What‑if / carrier</div></div>
+            </div>
+          </div></div>
+          <div class="panel"><div class="inner">
+            <h3>Carriers & Contacts</h3>
+            <div class="kpi-grid">
+              <div class="kpi"><div class="value mono" id="carriersExact"></div><div class="label">Carriers (exact)</div></div>
+              <div class="kpi"><div class="value mono" id="carriersFC"></div><div class="label">Floor / Ceil</div></div>
+              <div class="kpi"><div class="value mono" id="carriersRec"></div><div class="label">Recommended</div></div>
+              <div class="kpi"><div class="value mono" id="contactsNeeded"></div><div class="label">Contacts needed</div></div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- Breakeven always last -->
+        <section class="two-col">
+          <div class="panel"><div class="inner">
+            <h3>Breakeven — Contacts</h3>
+            <div class="list">
+              <div class="item"><span>AI Calls</span><span class="mono" id="beContactsCalls"></span></div>
+              <div class="item"><span>Email</span><span class="mono" id="beContactsEmail"></span></div>
+            </div>
+          </div></div>
+          <div class="panel"><div class="inner">
+            <h3>Breakeven — Commission & Revenue</h3>
+            <div class="list">
+              <div class="item"><span>Breakeven commission</span><span class="mono" id="beCommission"></span></div>
+              <div class="item"><span>Implied revenue above threshold</span><span class="mono" id="beRevAbove"></span></div>
+              <div class="item"><span>Total implied Avenor revenue</span><span class="mono" id="beTotalRev"></span></div>
+            </div>
+          </div></div>
+        </section>
+
+        <!-- Footer summary line -->
+        <section class="panel"><div class="inner">
+          <div class="item"><span>Summary</span><span class="mono" id="headline"></span></div>
+        </div></section>
+      </main>
     </div>
   </div>
 
   <script>
-    const $ = (id)=>document.getElementById(id);
-    const fmtMoney=(x)=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:2}).format(x);
-    const clamp2=(x)=>Math.round((x+Number.EPSILON)*100)/100;
-    const normPercent=(v)=>!Number.isFinite(v)?NaN:(v>1?v/100:(v<0?NaN:v));
+  (function(){
+    const $=s=>document.querySelector(s); const $$=s=>Array.from(document.querySelectorAll(s));
+    const fmt=n=>{ const c=$('#currency').value; const fx=parseFloat($('#fx').value)||1; let usd=Number(n||0); return c==='GBP' ? '£'+(usd*fx).toLocaleString(undefined,{maximumFractionDigits:2}) : '$'+usd.toLocaleString(undefined,{maximumFractionDigits:2}); };
 
-    function showError(msg){const el=$('error');el.textContent=msg;el.style.display='block';for(const sec of ['commission-summary','carrier-counts','funnel-reqs','recommendation']){$(sec).hidden=true;}}
-    function clearError(){const el=$('error');el.textContent='';el.style.display='none';}
+    // Accordion behaviour
+    $$('.group header').forEach(h=>{ h.addEventListener('click',()=>{ const g=h.parentElement; const open=g.getAttribute('data-open')==='true'; g.setAttribute('data-open', String(!open)); g.querySelector('.body').style.display = open ? 'none' : 'block'; }); const g=h.parentElement; if(g.getAttribute('data-open')==='true'){ g.querySelector('.body').style.display='block'; } else { g.querySelector('.body').style.display='none'; } });
 
-    function calcCommission(n,rpc,thr,rate){const revenue=n*rpc;return{revenue,commission:Math.max(0,revenue-thr)*rate};}
+    const els={
+      revPerCarrier:$('#revPerCarrier'), revPerCarrierGood:$('#revPerCarrierGood'), avenorPct:$('#avenorPct'), avenorPctWhatIf:$('#avenorPctWhatIf'), useGood:$('#useGood'),
+      threshold:$('#threshold'), rate:$('#rate'), targetCommission:$('#targetCommission'),
+      pCE:$('#pCE'), pEO:$('#pEO'), pOA:$('#pOA'), buffer:$('#buffer'), currency:$('#currency'), fx:$('#fx'),
+      derivedGross:$('#derivedGross'), whatIfRev:$('#whatIfRev'), revPerCarrierDisplay:$('#revPerCarrierDisplay'), totalRevNeeded:$('#totalAvenorRevenue'),
+      commissionOut:$('#commissionOut'), aboveThreshold:$('#aboveThreshold'), effectiveRate:$('#effectiveRate'), breakevenRevenue:$('#breakevenRevenue'),
+      carriersExact:$('#carriersExact'), carriersFC:$('#carriersFC'), carriersRec:$('#carriersRec'), totalAvenorRevenue:$('#totalAvenorRevenue'), aboveThreshAmount:$('#aboveThreshAmount'), commissionCheck:$('#commissionCheck'),
+      funnelMultiplier:$('#funnelMultiplier'), contactsNeeded:$('#contactsNeeded'), headline:$('#headline'),
+      // Fixed
+      fixedList:$('#fixedList'), fixedMonthly:$('#fixedMonthly'), fixedThisMonth:$('#fixedThisMonth'), addFixed:$('#addFixed'), resetFixed:$('#resetFixed'),
+      // Vars
+      costCallAttempt:$('#costCallAttempt'), attemptsPerReach:$('#attemptsPerReach'), costPerReach:$('#costPerReach'), costCallsTotal:$('#costCallsTotal'),
+      costEmailSend:$('#costEmailSend'), sendsPerProspect:$('#sendsPerProspect'), costEmailPerContact:$('#costEmailPerContact'), costEmailTotal:$('#costEmailTotal'),
+      // Tabs
+      tabCalls:$('#tabCalls'), tabEmail:$('#tabEmail'),
+      // Breakeven
+      beContactsCalls:$('#beContactsCalls'), beContactsEmail:$('#beContactsEmail'), beCommission:$('#beCommission'), beRevAbove:$('#beRevAbove'), beTotalRev:$('#beTotalRev')
+    };
 
-    function compute(p){
-      const rate=normPercent(p.ratePct),c2e=normPercent(p.c2ePct),e2o=normPercent(p.e2oPct),o2a=normPercent(p.o2aPct),buf=normPercent(p.bufPct);
-      if([p.rpc,p.thr,p.target].some(v=>!Number.isFinite(v))) throw new Error('Money inputs must be numbers.');
-      if([rate,c2e,e2o,o2a,buf].some(v=>!Number.isFinite(v))) throw new Error('Rates must be valid percentages.');
-      if(p.rpc<=0) throw new Error('Revenue per carrier must be > 0.');
-      if(p.thr<0) throw new Error('Threshold cannot be negative.');
-      if(rate<=0) throw new Error('Commission rate must be > 0%.');
-      if(p.target<0) throw new Error('Target commission cannot be negative.');
-      if([c2e,e2o,o2a].some(v=>v<=0||v>1)) throw new Error('Funnel rates must be > 0% and ≤ 100%.');
-      if(buf<0) throw new Error('Buffer cannot be negative.');
-
-      const excessNeeded=p.target/rate;
-      const totalRevNeeded=excessNeeded+p.thr;
-      const nFloat=totalRevNeeded/p.rpc; if(!Number.isFinite(nFloat)||nFloat<=0) throw new Error('Target unreachable with current inputs.');
-
-      const nFloor=Math.floor(nFloat),nCeil=Math.ceil(nFloat);
-      const floorRes=calcCommission(nFloor,p.rpc,p.thr,rate),ceilRes=calcCommission(nCeil,p.rpc,p.thr,rate);
-      const recommend=floorRes.commission>=p.target?nFloor:nCeil;
-
-      const contactsBase=nFloat/(c2e*e2o*o2a);
-      const contactsWithBuf=contactsBase*(1+buf);
-
-      return{nFloat,nFloor,nCeil,floorRes,ceilRes,recommend,contactsBase,contactsWithBuf,rate,c2e,e2o,o2a,buf};
+    // Fixed list model
+    let fixed=[{name:'Operations baseline', cadence:'monthly', amountUSD:50, paidThisMonth:true}];
+    function renderFixed(){
+      els.fixedList.innerHTML=''; let monthly=0, cash=0;
+      fixed.forEach((f,i)=>{
+        const mult=f.cadence==='annual'?1/12:1; monthly+=f.amountUSD*mult; cash+=f.paidThisMonth?f.amountUSD:0;
+        const row=document.createElement('div'); row.className='item';
+        row.innerHTML=`
+          <input style="flex:2" value="${f.name}">
+          <select style="flex:1"><option ${f.cadence==='monthly'?'selected':''} value="monthly">monthly</option><option ${f.cadence==='annual'?'selected':''} value="annual">annual</option></select>
+          <input style="flex:1" type="number" step="0.01" value="${f.amountUSD}">
+          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${f.paidThisMonth?'checked':''}><span class="mono">cash</span></label>
+          <button class="btn ghost" data-del="${i}">✕</button>`;
+        const [nameEl,cadEl,amtEl,chkEl,delBtn]=row.querySelectorAll('input,select,button');
+        nameEl.addEventListener('input',()=>{f.name=nameEl.value; calc();});
+        cadEl.addEventListener('change',()=>{f.cadence=cadEl.value; calc();});
+        amtEl.addEventListener('input',()=>{f.amountUSD=parseFloat(amtEl.value)||0; calc();});
+        chkEl.addEventListener('change',()=>{f.paidThisMonth=chkEl.checked; calc();});
+        delBtn.addEventListener('click',()=>{fixed.splice(i,1); renderFixed(); calc();});
+        els.fixedList.appendChild(row);
+      });
+      els.fixedMonthly.textContent=fmt(monthly); els.fixedThisMonth.textContent=fmt(cash);
+      return {monthlyTotal:monthly, cashThisMonth:cash};
     }
 
-    const KEY='commission-prospect-calculator:v2';
-    function getForm(){return{rpc:parseFloat($('revenuePerCarrier').value),thr:parseFloat($('threshold').value),ratePct:parseFloat($('commissionRate').value),target:parseFloat($('targetCommission').value),c2ePct:parseFloat($('contactToEngaged').value),e2oPct:parseFloat($('engagedToOnboarded').value),o2aPct:parseFloat($('onboardedToActive').value),bufPct:parseFloat($('contactBuffer').value)}}
-    function setForm(s){$('revenuePerCarrier').value=s.rpc;$('threshold').value=s.thr;$('commissionRate').value=s.ratePct;$('targetCommission').value=s.target;$('contactToEngaged').value=s.c2ePct;$('engagedToOnboarded').value=s.e2oPct;$('onboardedToActive').value=s.o2aPct;$('contactBuffer').value=s.bufPct}
-    function readState(){try{const raw=localStorage.getItem(KEY);if(raw) return JSON.parse(raw);}catch{}return{rpc:800,thr:3100,ratePct:15,target:2000,c2ePct:20,e2oPct:50,o2aPct:70,bufPct:20}}
-    function writeState(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch{}}
+    // Tabs
+    document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>{
+      document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      els.tabCalls.style.display = t.dataset.tab==='calls'? 'block':'none';
+      els.tabEmail.style.display = t.dataset.tab==='email'? 'block':'none';
+    }));
 
-    function validateInline(){const s=getForm();const checks=[['revenuePerCarrier',s.rpc>0],['threshold',s.thr>=0],['commissionRate',normPercent(s.ratePct)>0],['targetCommission',s.target>=0],['contactToEngaged',(normPercent(s.c2ePct)>0&&normPercent(s.c2ePct)<=1)],['engagedToOnboarded',(normPercent(s.e2oPct)>0&&normPercent(s.e2oPct)<=1)],['onboardedToActive',(normPercent(s.o2aPct)>0&&normPercent(s.o2aPct)<=1)],['contactBuffer',normPercent(s.bufPct)>=0]];for(const[id,ok]of checks){$(id).setAttribute('aria-invalid',ok?'false':'true')}}
+    // Add/reset fixed
+    els.addFixed.addEventListener('click',()=>{fixed.push({name:'New item', cadence:'monthly', amountUSD:0, paidThisMonth:false}); renderFixed(); calc();});
+    els.resetFixed.addEventListener('click',()=>{fixed=[{name:'Operations baseline', cadence:'monthly', amountUSD:50, paidThisMonth:true}]; renderFixed(); calc();});
 
-    function render(p, r){
-      // Reveal section blocks
-      for(const sec of ['commission-summary','carrier-counts','funnel-reqs','recommendation']){$(sec).hidden=false}
-      // Commission summary
-      $('pillTarget').textContent=fmtMoney(p.target);
-      $('exactN').textContent=r.nFloat.toFixed(2);
-      $('nFloor').textContent=r.nFloor; $('revFloor').textContent=fmtMoney(clamp2(r.nFloor*p.rpc)); $('comFloor').textContent=fmtMoney(clamp2(r.floorRes.commission));
-      $('nCeil').textContent=r.nCeil; $('revCeil').textContent=fmtMoney(clamp2(r.nCeil*p.rpc)); $('comCeil').textContent=fmtMoney(clamp2(r.ceilRes.commission));
-      // Carrier counts
-      $('nRecommend').textContent=r.recommend; $('pillRpc').textContent=fmtMoney(p.rpc); $('pillThr').textContent=fmtMoney(p.thr); $('pillRate').textContent=`${(r.rate*100).toFixed(2)}%`;
-      // Funnel
-      $('pillC2E').textContent=`${(r.c2e*100).toFixed(1)}%`; $('pillE2O').textContent=`${(r.e2o*100).toFixed(1)}%`; $('pillO2A').textContent=`${(r.o2a*100).toFixed(1)}%`; $('pillBuf').textContent=`${(r.buf*100).toFixed(1)}%`;
-      $('contactsBase').textContent=Math.max(0,Math.round(r.contactsBase)); $('contactsBuffer').textContent=Math.max(0,Math.round(r.contactsWithBuf));
-      // Recommendation
-      $('recText').innerHTML=`You need at least <b>${r.recommend}</b> active carriers and about <b>${Math.round(r.contactsWithBuf)}</b> contacts (incl. buffer) to hit a <b>${fmtMoney(p.target)}</b> commission.`;
+    function compute(){
+      const revTypical=parseFloat(els.revPerCarrier.value)||0;
+      const revGood=parseFloat(els.revPerCarrierGood.value)||0;
+      const avenorPct=(parseFloat(els.avenorPct.value)||0)/100;
+      const avenorPctWhatIf=(parseFloat(els.avenorPctWhatIf.value)||0)/100;
+      const useGood=els.useGood.value==='yes';
+      const revPerCarrier=useGood?revGood:revTypical;
+
+      const threshold=parseFloat(els.threshold.value)||0;
+      const rate=(parseFloat(els.rate.value)||0)/100;
+      const targetCommission=parseFloat(els.targetCommission.value)||0;
+
+      const pCE=(parseFloat(els.pCE.value)||0)/100;
+      const pEO=(parseFloat(els.pEO.value)||0)/100;
+      const pOA=(parseFloat(els.pOA.value)||0)/100;
+      const buffer=(parseFloat(els.buffer.value)||0)/100;
+
+      const grossPerCarrier=avenorPct>0 ? (revTypical/avenorPct) : 0;
+      const whatIfRev=grossPerCarrier*avenorPctWhatIf;
+
+      let carriersExact=0; if(revPerCarrier>0 && rate>0){ const neededAbove=targetCommission/rate + threshold; carriersExact = neededAbove/revPerCarrier; }
+      const carriersFloor=Math.floor(carriersExact); const carriersCeil=Math.ceil(carriersExact); const carriersRec=Math.max(0,carriersCeil);
+
+      const totalAvenorRevenue=revPerCarrier*carriersRec; const aboveAmt=Math.max(0,totalAvenorRevenue-threshold); const commissionCheck=aboveAmt*rate;
+
+      const conv=pCE*pEO*pOA; const contactsPerActive = conv>0 ? (1/conv)*(1+buffer) : 0; const contactsNeeded=Math.ceil(contactsPerActive*carriersRec);
+
+      const {monthlyTotal:fixedMonthly}=renderFixed();
+
+      const costCallAttempt=parseFloat(els.costCallAttempt.value)||0; const attemptsPerReach=parseFloat(els.attemptsPerReach.value)||1; const costPerReach=costCallAttempt*attemptsPerReach; const costCallsTotal=contactsNeeded*costCallAttempt;
+      const costEmailSend=parseFloat(els.costEmailSend.value)||0; const sendsPerProspect=parseInt(els.sendsPerProspect.value)||1; const costEmailPerContact=costEmailSend*sendsPerProspect; const costEmailTotal=contactsNeeded*costEmailPerContact;
+
+      function commissionFromContacts(N){ const carriers=contactsPerActive>0 ? (N/contactsPerActive) : 0; const totalRev=revPerCarrier*carriers; const above=Math.max(0,totalRev-threshold); return above*rate; }
+      function solveBreakevenContacts(varCost){ let lo=0,hi=1e6; for(let i=0;i<40;i++){ const mid=(lo+hi)/2; const lhs=commissionFromContacts(mid); const rhs=fixedMonthly+varCost*mid; if(lhs>=rhs) hi=mid; else lo=mid; } return Math.round(hi); }
+      const beContactsCalls=solveBreakevenContacts(costCallAttempt); const beContactsEmail=solveBreakevenContacts(costEmailPerContact);
+
+      const totalCostCalls=fixedMonthly+costCallsTotal; const totalCostEmail=fixedMonthly+costEmailTotal; const beCommissionUSD=Math.min(totalCostCalls,totalCostEmail); const beRevAbove=rate>0 ? (beCommissionUSD/rate) : 0; const beTotalRev=beRevAbove+threshold;
+
+      // Update UI
+      els.revPerCarrierDisplay.textContent=fmt(revPerCarrier);
+      els.totalAvenorRevenue.textContent=fmt(totalAvenorRevenue);
+      els.commissionOut.textContent=fmt(commissionCheck);
+      els.breakevenRevenue.textContent=fmt(beTotalRev);
+
+      els.aboveThreshold.textContent=aboveAmt>0? 'Above':'Below';
+      const effRate= totalAvenorRevenue>0 ? (commissionCheck/totalAvenorRevenue)*100 : 0; els.effectiveRate.textContent=effRate.toFixed(2)+'%';
+      els.aboveThreshAmount.textContent=fmt(aboveAmt);
+      els.whatIfRev.textContent=fmt(whatIfRev);
+
+      els.carriersExact.textContent=carriersExact.toFixed(2); els.carriersFC.textContent=`${carriersFloor} / ${carriersCeil}`; els.carriersRec.textContent=String(carriersRec); els.contactsNeeded.textContent=String(contactsNeeded);
+
+      els.costPerReach.value=costPerReach.toFixed(4); els.costCallsTotal.value=fmt(costCallsTotal); els.costEmailPerContact.value=costEmailPerContact.toFixed(4); els.costEmailTotal.value=fmt(costEmailTotal);
+
+      els.beContactsCalls.textContent=String(beContactsCalls); els.beContactsEmail.textContent=String(beContactsEmail); els.beCommission.textContent=fmt(beCommissionUSD); els.beRevAbove.textContent=fmt(beRevAbove); els.beTotalRev.textContent=fmt(beTotalRev);
+
+      els.headline.textContent=`${carriersRec} carriers → ${contactsNeeded} contacts | Commission ${fmt(commissionCheck)} | Costs (calls) ${fmt(totalCostCalls)} / (email) ${fmt(totalCostEmail)}`;
     }
 
-    function handleCalc(){clearError();try{const s=getForm();writeState(s);validateInline();const r=compute(s);render(s,r);}catch(e){showError(e.message)}}
-    function handleReset(){const d={rpc:800,thr:3100,ratePct:15,target:2000,c2ePct:20,e2oPct:50,o2aPct:70,bufPct:20};setForm(d);writeState(d);clearError();for(const sec of ['commission-summary','carrier-counts','funnel-reqs','recommendation']){$(sec).hidden=true}}
+    function calc(){ compute(); }
 
-    function copyShareLink(){const s=getForm();writeState(s);navigator.clipboard?.writeText(location.href).catch(()=>{});}
-    function exportJSON(){const s=getForm();const blob=new Blob([JSON.stringify(s,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='commission-calculator-settings.json';a.click();URL.revokeObjectURL(url)}
-    function importJSON(){const i=document.createElement('input');i.type='file';i.accept='application/json';i.onchange=()=>{const f=i.files?.[0];if(!f) return;const r=new FileReader();r.onload=()=>{try{const s=JSON.parse(String(r.result));setForm(s);writeState(s);}catch{}};r.readAsText(f)};i.click()}
+    // Wire inputs
+    $$('input,select').forEach(el=>{ el.addEventListener('input',calc); el.addEventListener('change',calc); });
+    $('#recalc').addEventListener('click',calc); $('#currency').addEventListener('change',calc);
 
-    // Init
-    (function init(){const state=readState();setForm(state);validateInline();document.getElementById('btnCalc').addEventListener('click',handleCalc);document.getElementById('btnReset').addEventListener('click',handleReset);document.getElementById('btnShare').addEventListener('click',copyShareLink);document.getElementById('btnExport').addEventListener('click',exportJSON);document.getElementById('btnImport').addEventListener('click',importJSON);})();
+    // Export/Import/Reset
+    function snapshot(){ return { revPerCarrier:+els.revPerCarrier.value, revPerCarrierGood:+els.revPerCarrierGood.value, avenorPct:+els.avenorPct.value, avenorPctWhatIf:+els.avenorPctWhatIf.value, useGood:els.useGood.value, threshold:+els.threshold.value, rate:+els.rate.value, targetCommission:+els.targetCommission.value, pCE:+els.pCE.value, pEO:+els.pEO.value, pOA:+els.pOA.value, buffer:+els.buffer.value, fixed, costCallAttempt:+els.costCallAttempt.value, attemptsPerReach:+els.attemptsPerReach.value, costEmailSend:+els.costEmailSend.value, sendsPerProspect:+els.sendsPerProspect.value, currency:$('#currency').value, fx:+$('#fx').value }; }
+    function load(state){ if(!state) return; els.revPerCarrier.value=state.revPerCarrier??800; els.revPerCarrierGood.value=state.revPerCarrierGood??1000; els.avenorPct.value=state.avenorPct??5; els.avenorPctWhatIf.value=state.avenorPctWhatIf??5; els.useGood.value=state.useGood??'no'; els.threshold.value=state.threshold??3100; els.rate.value=state.rate??15; els.targetCommission.value=state.targetCommission??2700; els.pCE.value=state.pCE??20; els.pEO.value=state.pEO??50; els.pOA.value=state.pOA??70; els.buffer.value=state.buffer??20; fixed = Array.isArray(state.fixed)&&state.fixed.length? state.fixed : fixed; els.costCallAttempt.value=state.costCallAttempt??0.4; els.attemptsPerReach.value=state.attemptsPerReach??1.5; els.costEmailSend.value=state.costEmailSend??0.003; els.sendsPerProspect.value=state.sendsPerProspect??2; $('#currency').value=state.currency??'USD'; $('#fx').value=state.fx??0.78; renderFixed(); calc(); }
+
+    document.getElementById('export').addEventListener('click',()=>{ const data=JSON.stringify(snapshot(),null,2); const blob=new Blob([data],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='planner_state.json'; a.click(); URL.revokeObjectURL(url); });
+    document.getElementById('import').addEventListener('click',()=>{ const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json'; inp.onchange=()=>{ const f=inp.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ try{ load(JSON.parse(fr.result)); }catch(e){ alert('Invalid JSON'); } }; fr.readAsText(f); }; inp.click(); });
+    document.getElementById('resetAll').addEventListener('click',()=>{ localStorage.removeItem('planner_state_clean'); location.reload(); });
+
+    function persist(){ localStorage.setItem('planner_state_clean', JSON.stringify(snapshot())); }
+    window.addEventListener('beforeunload', persist);
+
+    renderFixed(); const saved=localStorage.getItem('planner_state_clean'); if(saved){ try{ load(JSON.parse(saved)); }catch(e){ calc(); } } else { calc(); }
+  })();
   </script>
 </body>
 </html>
+
