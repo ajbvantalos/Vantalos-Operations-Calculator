@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Avenor/Vantalos Unit Economics Planner — Stacked Layout</title>
+  <title>Avenor/Vantalos Unit Economics Planner — Stacked Layout (Fixed Costs Bugfix)</title>
   <style>
     :root{
       --bg:#0b0c10; --surface:#131827; --surface-2:#1a2133; --surface-3:#212a41;
@@ -19,17 +19,17 @@
     p{margin:.2rem 0;color:var(--muted)}
 
     .app{max-width:1200px;margin:0 auto;padding:18px}
-    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:12px;flex-wrap:wrap}
     .brand{display:flex;gap:10px;align-items:center}
     .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 6px #d3b99c22}
 
-    /* Layout: STACKED — left (inputs) above right (results) */
+    /* Layout: STACKED — inputs above results */
     .layout{display:grid;grid-template-columns:1fr;gap:14px}
 
     .panel{background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
     .inner{padding:14px}
 
-    /* Inputs sidebar */
+    /* Inputs accordion */
     .group{border-top:1px solid var(--border)}
     .group:first-child{border-top:0}
     .group header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer}
@@ -45,18 +45,18 @@
     /* Results */
     .results{display:grid;grid-template-rows:auto auto 1fr;gap:14px}
 
-    .toolbar{display:flex;gap:8px;align-items:center}
+    .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     button{border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
     .btn{background:var(--accent);color:#16181f}
     .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border);font-weight:600}
 
-    /* Make KPI grid 2-wide for readability in stacked layout */
+    /* KPI grid two-wide for readability */
     .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;grid-auto-rows:minmax(74px,auto)}
     .kpi{background:var(--surface-3);border:1px solid var(--border);border-radius:12px;padding:10px;overflow:hidden}
     .kpi .value{font-weight:800;font-size:1.25rem;line-height:1.15;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
     .kpi .label{font-size:.85rem;color:var(--muted);white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 
-    /* Keep two-col sections responsive; they collapse on small screens naturally */
+    /* Two-column sections (collapse on narrow) */
     .two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 
     @media (max-width: 960px){
@@ -88,7 +88,7 @@
     </div>
 
     <div class="layout">
-      <!-- TOP: Inputs (Left section) -->
+      <!-- TOP: Inputs -->
       <aside class="panel" aria-label="Inputs">
         <div class="inner">
           <div class="group" data-open="true">
@@ -128,6 +128,7 @@
             </div>
           </div>
 
+          <!-- COSTS (fixed typing bug fixed) -->
           <div class="group" data-open="true">
             <header><h3>Costs</h3><span>editable</span></header>
             <div class="body">
@@ -141,7 +142,6 @@
                 <div class="item"><span>Monthlyized total</span><span class="mono" id="fixedMonthly"></span></div>
                 <div class="item"><span>Cash outflow this month</span><span class="mono" id="fixedThisMonth"></span></div>
               </div>
-          
               <div style="height:10px"></div>
               <h3>Variable — AI Calls</h3>
               <div class="grid-2">
@@ -150,7 +150,6 @@
                 <div><label>Cost per reached human (auto)</label><input id="costPerReach" type="number" disabled></div>
                 <div><label>Cost for required contacts (auto)</label><input id="costCallsTotal" type="text" disabled></div>
               </div>
-          
               <h3 style="margin-top:10px">Variable — Email</h3>
               <div class="grid-2">
                 <div><label for="costEmailSend">Cost per email send ($)</label><input id="costEmailSend" type="number" step="0.0001" value="0.003"></div>
@@ -159,11 +158,11 @@
                 <div><label>Cost for required contacts (auto)</label><input id="costEmailTotal" type="text" disabled></div>
               </div>
             </div>
-          </div>          
+          </div>
         </div>
       </aside>
 
-      <!-- BELOW: Results (Summary KPIs appear immediately after inputs) -->
+      <!-- BELOW: Results (Summary KPIs appear after inputs) -->
       <main class="results">
         <!-- Summary KPIs -->
         <section class="panel"><div class="inner">
@@ -230,7 +229,7 @@
     const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
     const fmt=n=>{const c=$('#currency').value,fx=parseFloat($('#fx').value)||1;let usd=Number(n||0);return c==='GBP'?('£'+(usd*fx).toLocaleString(undefined,{maximumFractionDigits:2})):('$'+usd.toLocaleString(undefined,{maximumFractionDigits:2}));};
 
-    // Accordion (kept open by default)
+    // Accordion
     $$('.group header').forEach(h=>{
       h.addEventListener('click',()=>{
         const g=h.parentElement; const body=g.querySelector('.body');
@@ -260,78 +259,41 @@
       costEmailSend:$('#costEmailSend'),sendsPerProspect:$('#sendsPerProspect'),costEmailPerContact:$('#costEmailPerContact'),costEmailTotal:$('#costEmailTotal')
     };
 
-    // Fixed list model
-    // === FIXED COSTS: model + renderer ===
-let fixed = [
-  { name: 'Operations baseline', cadence: 'monthly', amountUSD: 50, paidThisMonth: true }
-];
+    // === FIXED COSTS: model + renderer (no re-render on keypress) ===
+    let fixed=[{name:'Operations baseline', cadence:'monthly', amountUSD:50, paidThisMonth:true}];
 
-function renderFixed(){
-  const list = document.getElementById('fixedList');
-  const fixedMonthlyEl = document.getElementById('fixedMonthly');
-  const fixedThisMonthEl = document.getElementById('fixedThisMonth');
-  if(!list) return { monthlyTotal:0, cashThisMonth:0 };
+    function calcFixedTotals(){
+      let monthly=0,cash=0; fixed.forEach(f=>{ const mult=f.cadence==='annual'?1/12:1; monthly+=(Number(f.amountUSD)||0)*mult; cash+=f.paidThisMonth?(Number(f.amountUSD)||0):0; });
+      const _fmt=n=> (typeof fmt==='function'?fmt(n):`$${(Number(n)||0).toFixed(2)}`);
+      if(els.fixedMonthly) els.fixedMonthly.textContent=_fmt(monthly);
+      if(els.fixedThisMonth) els.fixedThisMonth.textContent=_fmt(cash);
+      return {monthlyTotal:monthly, cashThisMonth:cash};
+    }
 
-  list.innerHTML = '';
-  let monthly = 0, cash = 0;
-
-  fixed.forEach((f, i) => {
-    const mult = f.cadence === 'annual' ? 1/12 : 1;
-    monthly += (Number(f.amountUSD)||0) * mult;
-    cash += f.paidThisMonth ? (Number(f.amountUSD)||0) : 0;
-
-    const row = document.createElement('div');
-    row.className = 'item';
-    row.innerHTML = `
-      <input aria-label="Fixed item name" style="flex:2" value="${f.name}">
-      <select aria-label="Billing cadence" style="flex:1">
-        <option value="monthly" ${f.cadence==='monthly'?'selected':''}>monthly</option>
-        <option value="annual" ${f.cadence==='annual'?'selected':''}>annual</option>
-      </select>
-      <input aria-label="Amount (USD)" style="flex:1" type="number" step="0.01" value="${f.amountUSD}">
-      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${f.paidThisMonth?'checked':''}><span class="mono">cash</span></label>
-      <button class="btn ghost" title="Remove">✕</button>
-    `;
-
-    const controls = row.querySelectorAll('input,select,button');
-    const nameEl = controls[0];
-    const cadEl  = controls[1];
-    const amtEl  = controls[2];
-    const chkEl  = controls[3];
-    const delBtn = controls[4];
-
-    nameEl.addEventListener('input', () => { f.name = nameEl.value; if(typeof calc==='function') calc(); });
-    cadEl.addEventListener('change', () => { f.cadence = cadEl.value; if(typeof calc==='function') calc(); });
-    amtEl.addEventListener('input', () => { f.amountUSD = parseFloat(amtEl.value)||0; if(typeof calc==='function') calc(); });
-    chkEl.addEventListener('change', () => { f.paidThisMonth = chkEl.checked; if(typeof calc==='function') calc(); });
-    delBtn.addEventListener('click', () => { fixed.splice(i,1); renderFixed(); if(typeof calc==='function') calc(); });
-
-    list.appendChild(row);
-  });
-
-  const _fmt = n => (typeof fmt==='function' ? fmt(n) : `$${(Number(n)||0).toFixed(2)}`);
-  if (fixedMonthlyEl) fixedMonthlyEl.textContent = _fmt(monthly);
-  if (fixedThisMonthEl) fixedThisMonthEl.textContent = _fmt(cash);
-
-  return { monthlyTotal: monthly, cashThisMonth: cash };
-}
-// === FIXED COSTS: actions ===
-(function(){
-  const addBtn = document.getElementById('addFixed');
-  const resetBtn = document.getElementById('resetFixed');
-
-  if (addBtn) addBtn.addEventListener('click', () => {
-    fixed.push({ name: 'New item', cadence: 'monthly', amountUSD: 0, paidThisMonth: false });
-    renderFixed();
-    if (typeof calc==='function') calc();
-  });
-
-  if (resetBtn) resetBtn.addEventListener('click', () => {
-    fixed = [{ name: 'Operations baseline', cadence: 'monthly', amountUSD: 50, paidThisMonth: true }];
-    renderFixed();
-    if (typeof calc==='function') calc();
-  });
-})();
+    function renderFixed(){
+      const list=els.fixedList; if(!list) return {monthlyTotal:0, cashThisMonth:0};
+      list.innerHTML='';
+      fixed.forEach((f,i)=>{
+        const row=document.createElement('div'); row.className='item';
+        row.innerHTML=`
+          <input aria-label="Fixed item name" style="flex:2" value="${f.name}">
+          <select aria-label="Billing cadence" style="flex:1">
+            <option value="monthly" ${f.cadence==='monthly'?'selected':''}>monthly</option>
+            <option value="annual" ${f.cadence==='annual'?'selected':''}>annual</option>
+          </select>
+          <input aria-label="Amount (USD)" style="flex:1" type="number" step="0.01" value="${f.amountUSD}">
+          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${f.paidThisMonth?'checked':''}><span class="mono">cash</span></label>
+          <button class="btn ghost" title="Remove">✕</button>`;
+        const [nameEl,cadEl,amtEl,chkEl,delBtn]=row.querySelectorAll('input,select,button');
+        nameEl.addEventListener('input',()=>{ f.name=nameEl.value; });
+        cadEl.addEventListener('change',()=>{ f.cadence=cadEl.value; calcFixedTotals(); if(typeof calc==='function') calc(); });
+        amtEl.addEventListener('input',()=>{ f.amountUSD=parseFloat(amtEl.value)||0; calcFixedTotals(); if(typeof calc==='function') calc(); });
+        chkEl.addEventListener('change',()=>{ f.paidThisMonth=chkEl.checked; calcFixedTotals(); if(typeof calc==='function') calc(); });
+        delBtn.addEventListener('click',()=>{ fixed.splice(i,1); renderFixed(); calcFixedTotals(); if(typeof calc==='function') calc(); });
+        list.appendChild(row);
+      });
+      return calcFixedTotals();
+    }
 
     // Core math
     function compute(){
@@ -359,7 +321,6 @@ function renderFixed(){
       const whatIfRev = grossPerCarrier * pctWhatIf;                 // hold gross constant, change %
 
       // 2) Solve carriers needed for target commission from piecewise function
-      // Commission = rate * max(0, R_total - threshold), R_total = baseRevPerCarrier * n
       let carriersExact=0;
       if(baseRevPerCarrier>0 && rate>0){
         const neededTotalRev = threshold + targetCommission / rate;
@@ -379,8 +340,8 @@ function renderFixed(){
       const contactsPerActive = conv>0 ? (1/conv)*(1+buffer) : Infinity;
       const contactsNeeded = isFinite(contactsPerActive) ? Math.ceil(contactsPerActive * carriersRec) : 0;
 
-      // 5) Costs (fixed + variable)
-      const {monthlyTotal:fixedMonthly} = renderFixed();
+      // 5) Costs (fixed + variable) — use totals only (no list rebuild)
+      const {monthlyTotal:fixedMonthly} = calcFixedTotals();
       // Calls
       const costCallAttempt = parseFloat(els.costCallAttempt.value)||0;
       const attemptsPerReach = parseFloat(els.attemptsPerReach.value)||1;
@@ -392,7 +353,7 @@ function renderFixed(){
       const costEmailPerContact = costEmailSend * sendsPerProspect;
       const costEmailTotal = contactsNeeded * costEmailPerContact;
 
-      // 6) Breakeven contacts — binary search with large bounds to handle extreme ARPU
+      // 6) Breakeven contacts — search
       function commissionFromContacts(N){
         if(!isFinite(contactsPerActive) || contactsPerActive<=0) return 0;
         const carriers = N / contactsPerActive;
@@ -402,7 +363,7 @@ function renderFixed(){
       }
       function solveBreakevenContacts(varCost){
         if(rate<=0 || !isFinite(contactsPerActive) || contactsPerActive<=0 || baseRevPerCarrier<=0) return 0;
-        let lo=0, hi=1e9; // supports huge revenues per carrier
+        let lo=0, hi=1e9;
         for(let i=0;i<60;i++){
           const mid=(lo+hi)/2;
           const lhs=commissionFromContacts(mid);
@@ -458,6 +419,10 @@ function renderFixed(){
     $('#recalc').addEventListener('click', calc);
     $('#currency').addEventListener('change', calc);
 
+    // Fixed: add/reset buttons
+    if(els.addFixed){ els.addFixed.addEventListener('click',()=>{ fixed.push({name:'New item', cadence:'monthly', amountUSD:0, paidThisMonth:false}); renderFixed(); if(typeof calc==='function') calc(); }); }
+    if(els.resetFixed){ els.resetFixed.addEventListener('click',()=>{ fixed=[{name:'Operations baseline', cadence:'monthly', amountUSD:50, paidThisMonth:true}]; renderFixed(); if(typeof calc==='function') calc(); }); }
+
     // Export / import / reset
     function snapshot(){
       return {
@@ -512,7 +477,8 @@ function renderFixed(){
 
     // Init
     const saved = localStorage.getItem('commission_planner_final');
-    if(saved){ try{ load(JSON.parse(saved)); } catch(e){ calc(); } } else { renderFixed(); calc(); }
+    if(saved){ try{ load(JSON.parse(saved)); } catch(e){ renderFixed(); calc(); } }
+    else { renderFixed(); calc(); }
   })();
   </script>
 </body>
