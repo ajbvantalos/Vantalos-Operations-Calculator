@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Avenor/Vantalos Unit Economics Planner — Stacked Layout (Fixed Costs Bugfix)</title>
+  <title>Avenor/Vantalos Unit Economics Planner — Full Iteration</title>
   <style>
     :root{
       --bg:#0b0c10; --surface:#131827; --surface-2:#1a2133; --surface-3:#212a41;
@@ -15,7 +15,7 @@
     html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial}
     h1{font-size:1.6rem;margin:0}
     h2{font-size:1rem;color:var(--muted);margin:.2rem 0 .6rem}
-    h3{font-size:.95rem;color:var(--accent);margin:0 0 .4rem}
+    h3{font-size:1rem;color:var(--accent);margin:0 0 .4rem}
     p{margin:.2rem 0;color:var(--muted)}
 
     .app{max-width:1200px;margin:0 auto;padding:18px}
@@ -27,23 +27,33 @@
     .layout{display:grid;grid-template-columns:1fr;gap:14px}
 
     .panel{background:linear-gradient(180deg,var(--surface),var(--surface-2));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
-    .inner{padding:14px}
+    .inner{padding:16px 16px 18px}
+
+    .accent-title{font-size:1rem;color:#f0e9df;font-weight:800;margin:0 0 8px}
 
     /* Inputs accordion */
-    .group{border-top:1px solid var(--border)}
+    .group{border-top:1px solid var(--border);margin:10px 0}
     .group:first-child{border-top:0}
     .group header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;cursor:pointer}
     .group header:hover{background:var(--surface-3)}
     .group header h3{margin:0}
-    .group .body{padding:0 14px 14px}
+    .group .body{padding:0 14px 14px;background:#121827}
+    /* clearer open state */
+    .group[data-open="true"] .body{background:#172033;border-top:1px solid var(--border);border-bottom:1px solid var(--border);border-bottom-left-radius:12px;border-bottom-right-radius:12px;box-shadow:inset 0 -1px 0 rgba(0,0,0,.35)}
     .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 
     label{font-size:.82rem;color:var(--muted)}
     input,select{width:100%;border:1px solid var(--border);background:#161d2d;color:var(--text);padding:10px;border-radius:10px;font-size:.95rem;outline:none;transition:.2s}
     input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px #d3b99c33}
 
+    .muted-note{font-size:.78rem;color:var(--muted);margin-top:6px}
+    .sr-only{position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden}
+
     /* Results */
     .results{display:grid;grid-template-rows:auto auto 1fr;gap:14px}
+    /* vertical rhythm between result sections */
+    .results>section{margin-bottom:18px}
+    .results>.two-col{margin-bottom:18px}
 
     .toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     button{border:none;border-radius:10px;padding:10px 12px;font-weight:700;cursor:pointer}
@@ -51,8 +61,8 @@
     .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--border);font-weight:600}
 
     /* KPI grid two-wide for readability */
-    .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;grid-auto-rows:minmax(74px,auto)}
-    .kpi{background:var(--surface-3);border:1px solid var(--border);border-radius:12px;padding:10px;overflow:hidden}
+    .kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;grid-auto-rows:minmax(74px,auto);margin-top:8px}
+    .kpi{background:var(--surface-3);border:1px solid var(--border);border-radius:12px;padding:14px;overflow:hidden}
     .kpi .value{font-weight:800;font-size:1.25rem;line-height:1.15;white-space:normal;overflow-wrap:anywhere;word-break:break-word}
     .kpi .label{font-size:.85rem;color:var(--muted);white-space:normal;overflow-wrap:anywhere;word-break:break-word}
 
@@ -71,15 +81,46 @@
     .item span:last-child{flex:1 1 40%;min-width:0;text-align:right}
 
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+
+    /* Active vs inactive fixed totals */
+    .inactive-total{opacity:.45;filter:saturate(60%)}
+    .active-total{opacity:1;filter:none}
+
+    /* Bottom summary mini-cards */
+    .headline-card{background:linear-gradient(180deg,#1e2538,#121827);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:14px;padding:14px 16px;box-shadow:0 10px 28px rgba(0,0,0,.35)}
+    .headline-title{font-weight:800;color:#f0e9df;margin:0 0 6px;letter-spacing:.2px}
+    .headline-body{font-size:1.05rem;line-height:1.35;color:var(--text);white-space:normal;overflow-wrap:anywhere;word-break:break-word}
+
+    .summary-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:8px}
+    @media (max-width:960px){.summary-grid{grid-template-columns:1fr 1fr}}
+    @media (max-width:520px){.summary-grid{grid-template-columns:1fr}}
+    .sum-card{background:var(--surface-3);border:1px solid var(--border);border-radius:12px;padding:12px;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:10px;row-gap:4px;align-items:center;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+    .sum-label{grid-column:2/3;font-size:.85rem;color:var(--muted)}
+    .sum-value{grid-column:2/3;font-weight:900;font-size:1.25rem;line-height:1.15;color:#fff}
+    .lamp{width:12px;height:12px;border-radius:50%;display:inline-block}
+    .lamp--ok{background:var(--ok);box-shadow:0 0 0 6px rgba(46,204,113,.18)}
+
+    /* hide legacy headline string (still populated for compat) */
+    #headline{display:none}
   </style>
 </head>
 <body>
   <div class="app">
     <div class="topbar">
-      <div class="brand"><div class="dot"></div><div><h1>Avenor/Vantalos Unit Economics Planner</h1><h2>Commission = 15% of Avenor revenue from our leads, only above $3,100/mo threshold.</h2></div></div>
+      <div class="brand"><div class="dot"></div><div><h1>Avenor/Vantalos Unit Economics Planner</h1><h2>Commission = 15% of Avenor revenue from our leads, only above threshold.</h2></div></div>
       <div class="toolbar">
         <select id="currency"><option value="USD">$ USD</option><option value="GBP">£ GBP</option></select>
         <input id="fx" type="number" step="0.0001" value="0.78" title="FX (1 USD → GBP)"/>
+        <!-- Breakeven basis selector -->
+        <select id="beBasis" title="Breakeven basis">
+          <option value="accrual">Accrual (monthlyised)</option>
+          <option value="cash">Cash (due this month)</option>
+        </select>
+        <!-- Optional: auto-adjust target with contact cost (persisted) -->
+        <label class="muted-note" style="display:inline-flex;gap:6px;align-items:center">
+          <input type="checkbox" id="autoAdjustBreakeven" />
+          <span>Auto‑adjust target with contact cost</span>
+        </label>
         <button class="btn" id="recalc">Recalculate</button>
         <button class="btn ghost" id="export">Export JSON</button>
         <button class="btn ghost" id="import">Import JSON</button>
@@ -91,6 +132,8 @@
       <!-- TOP: Inputs -->
       <aside class="panel" aria-label="Inputs">
         <div class="inner">
+          <h3 class="accent-title">Inputs</h3>
+
           <div class="group" data-open="true">
             <header><h3>Avenor Revenue (per active carrier)</h3><span>monthly</span></header>
             <div class="body">
@@ -109,9 +152,13 @@
             <header><h3>Commission (Vantalos)</h3><span>thresholded</span></header>
             <div class="body">
               <div class="grid-2">
-                <div><label for="threshold">Threshold ($)</label><input id="threshold" type="number" value="3100"></div>
+                <div><label for="threshold">Threshold</label><input id="threshold" type="number" value="3100"></div>
                 <div><label for="rate">Rate above threshold (%)</label><input id="rate" type="number" step="0.1" value="15"></div>
-                <div style="grid-column:1/3"><label for="targetCommission">Target commission ($)</label><input id="targetCommission" type="number" value="2700"></div>
+                <div style="grid-column:1/3">
+                  <label for="targetCommission">Target commission</label>
+                  <input id="targetCommission" type="number" value="2700">
+                  <div class="muted-note">Minimum commission to break even (from accounting). Used to derive carriers → contacts → contact costs.</div>
+                </div>
               </div>
             </div>
           </div>
@@ -139,20 +186,22 @@
                 <button class="btn ghost" id="resetFixed">Reset → $50 default</button>
               </div>
               <div class="grid-2">
-                <div class="item"><span>Monthlyized total</span><span class="mono" id="fixedMonthly"></span></div>
+                <div class="item"><span>Monthlyised total</span><span class="mono" id="fixedMonthly"></span></div>
                 <div class="item"><span>Cash outflow this month</span><span class="mono" id="fixedThisMonth"></span></div>
               </div>
+              <div class="muted-note" id="fixedBasisNote" style="margin-top:6px"></div>
+
               <div style="height:10px"></div>
               <h3>Variable — AI Calls</h3>
               <div class="grid-2">
-                <div><label for="costCallAttempt">Cost per call attempt ($)</label><input id="costCallAttempt" type="number" step="0.0001" value="0.40"></div>
+                <div><label for="costCallAttempt">Cost per call attempt</label><input id="costCallAttempt" type="number" step="0.0001" value="0.40"></div>
                 <div><label for="attemptsPerReach">Attempts per human reach</label><input id="attemptsPerReach" type="number" step="0.1" value="1.5"></div>
                 <div><label>Cost per reached human (auto)</label><input id="costPerReach" type="number" disabled></div>
                 <div><label>Cost for required contacts (auto)</label><input id="costCallsTotal" type="text" disabled></div>
               </div>
               <h3 style="margin-top:10px">Variable — Email</h3>
               <div class="grid-2">
-                <div><label for="costEmailSend">Cost per email send ($)</label><input id="costEmailSend" type="number" step="0.0001" value="0.003"></div>
+                <div><label for="costEmailSend">Cost per email send</label><input id="costEmailSend" type="number" step="0.0001" value="0.003"></div>
                 <div><label for="sendsPerProspect">Sends per prospect</label><input id="sendsPerProspect" type="number" step="1" value="2"></div>
                 <div><label>Cost per contacted prospect (auto)</label><input id="costEmailPerContact" type="number" disabled></div>
                 <div><label>Cost for required contacts (auto)</label><input id="costEmailTotal" type="text" disabled></div>
@@ -181,8 +230,8 @@
             <h3>Commission Snapshot</h3>
             <div class="kpi-grid">
               <div class="kpi"><div class="value mono" id="commissionOut"></div><div class="label">Vantalos commission (15% above threshold)</div></div>
-              <div class="kpi"><div class="value mono" id="aboveThreshAmount"></div><div class="label">Revenue above $3,100</div></div>
-              <div class="kpi"><div class="value mono" id="effectiveRate"></div><div class="label">Effective rate vs total</div></div>
+              <div class="kpi"><div class="value mono" id="aboveThreshAmount"></div><div class="label" id="aboveThreshLabel">Revenue above threshold</div></div>
+              <div class="kpi"><div class="value mono" id="effectiveRate"></div><div class="label">Commission as % of total revenue</div></div>
               <div class="kpi"><div class="value mono" id="breakevenRevenue"></div><div class="label">Breakeven total revenue</div></div>
             </div>
           </div></div>
@@ -191,7 +240,7 @@
             <div class="kpi-grid">
               <div class="kpi"><div class="value mono" id="carriersExact"></div><div class="label">Carriers to hit target commission (exact)</div></div>
               <div class="kpi"><div class="value mono" id="carriersFC"></div><div class="label">Carriers floor / ceil</div></div>
-              <div class="kpi"><div class="value mono" id="carriersRec"></div><div class="label">Recommended carriers</div></div>
+              <div class="kpi"><div class="value mono" id="carriersRec"></div><div class="label">Active carriers required to hit target commission</div></div>
               <div class="kpi"><div class="value mono" id="contactsNeeded"></div><div class="label">Contacts required (incl. buffer)</div></div>
             </div>
           </div></div>
@@ -208,6 +257,7 @@
           </div></div>
           <div class="panel"><div class="inner">
             <h3>Breakeven — Commission & Revenue</h3>
+            <div class="muted-note" id="basisNoteBR"></div>
             <div class="list">
               <div class="item"><span>Breakeven commission (at required contacts)</span><span class="mono" id="beCommission"></span></div>
               <div class="item"><span>Implied revenue above threshold</span><span class="mono" id="beRevAbove"></span></div>
@@ -216,9 +266,21 @@
           </div></div>
         </section>
 
-        <!-- Footer summary line -->
+        <!-- Footer summary line as cards -->
         <section class="panel"><div class="inner">
-          <div class="item"><span>Summary</span><span class="mono" id="headline"></span></div>
+          <div class="headline-card">
+            <div class="headline-title">Summary</div>
+            <div class="summary-grid">
+              <div class="sum-card"><span class="lamp lamp--ok" aria-hidden="true"></span><div class="sum-label">Active carriers required to hit target commission</div><div class="sum-value mono" id="sumCarriersRec"></div></div>
+              <div class="sum-card"><span class="lamp lamp--ok" aria-hidden="true"></span><div class="sum-label">Contacts required</div><div class="sum-value mono" id="sumContactsNeeded"></div></div>
+              <div class="sum-card"><span class="lamp lamp--ok" aria-hidden="true"></span><div class="sum-label">Commission</div><div class="sum-value mono" id="sumCommission"></div></div>
+              <div class="sum-card"><span class="lamp lamp--ok" aria-hidden="true"></span><div class="sum-label">Total cost (calls path)</div><div class="sum-value mono" id="sumCostCalls"></div></div>
+              <div class="sum-card"><span class="lamp lamp--ok" aria-hidden="true"></span><div class="sum-label">Total cost (email path)</div><div class="sum-value mono" id="sumCostEmail"></div></div>
+              <div class="sum-card"><span class="lamp lamp--ok" aria-hidden="true"></span><div class="sum-label">Basis</div><div class="sum-value" id="sumBasis"></div></div>
+            </div>
+            <!-- keep legacy string for compatibility, but hide it -->
+            <div class="headline-body mono" id="headline" aria-hidden="true"></div>
+          </div>
         </div></section>
       </main>
     </div>
@@ -227,7 +289,7 @@
   <script>
   (function(){
     const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
-    const fmt=n=>{const c=$('#currency').value,fx=parseFloat($('#fx').value)||1;let usd=Number(n||0);return c==='GBP'?('£'+(usd*fx).toLocaleString(undefined,{maximumFractionDigits:2})):('$'+usd.toLocaleString(undefined,{maximumFractionDigits:2}));};
+    const fmt=n=>{const c=$('#currency').value,fx=parseFloat($('#fx').value)||1;let usd=Number(n||0);return c==='GBP'?'£'+(usd*fx).toLocaleString(undefined,{maximumFractionDigits:2}):'$'+usd.toLocaleString(undefined,{maximumFractionDigits:2});};
 
     // Accordion
     $$('.group header').forEach(h=>{
@@ -259,7 +321,7 @@
       costEmailSend:$('#costEmailSend'),sendsPerProspect:$('#sendsPerProspect'),costEmailPerContact:$('#costEmailPerContact'),costEmailTotal:$('#costEmailTotal')
     };
 
-    // === FIXED COSTS: model + renderer (no re-render on keypress) ===
+    // === FIXED COSTS: model + renderer ===
     let fixed=[{name:'Operations baseline', cadence:'monthly', amountUSD:50, paidThisMonth:true}];
 
     function calcFixedTotals(){
@@ -282,7 +344,7 @@
             <option value="annual" ${f.cadence==='annual'?'selected':''}>annual</option>
           </select>
           <input aria-label="Amount (USD)" style="flex:1" type="number" step="0.01" value="${f.amountUSD}">
-          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${f.paidThisMonth?'checked':''}><span class="mono">cash</span></label>
+          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${f.paidThisMonth?'checked':''}><span class="mono">due this month</span></label>
           <button class="btn ghost" title="Remove">✕</button>`;
         const [nameEl,cadEl,amtEl,chkEl,delBtn]=row.querySelectorAll('input,select,button');
         nameEl.addEventListener('input',()=>{ f.name=nameEl.value; });
@@ -306,9 +368,9 @@
       // Commission params
       const pct = (parseFloat(els.avenorPct.value)||0)/100;         // current dispatch %
       const pctWhatIf = (parseFloat(els.avenorPctWhatIf.value)||0)/100; // what-if dispatch %
-      const threshold = parseFloat(els.threshold.value)||0;         // $3,100
+      const threshold = parseFloat(els.threshold.value)||0;         // threshold currency-agnostic
       const rate = (parseFloat(els.rate.value)||0)/100;             // 15%
-      const targetCommission = parseFloat(els.targetCommission.value)||0;
+      const targetCommissionBase = parseFloat(els.targetCommission.value)||0; // accounting target
 
       // Funnel params
       const pCE=(parseFloat(els.pCE.value)||0)/100,
@@ -320,40 +382,65 @@
       const grossPerCarrier = pct>0 ? (baseRevPerCarrier / pct) : 0; // e.g., $800 @ 5% ⇒ $16,000 gross
       const whatIfRev = grossPerCarrier * pctWhatIf;                 // hold gross constant, change %
 
-      // 2) Solve carriers needed for target commission from piecewise function
-      let carriersExact=0;
-      if(baseRevPerCarrier>0 && rate>0){
-        const neededTotalRev = threshold + targetCommission / rate;
-        carriersExact = neededTotalRev / baseRevPerCarrier;
-      }
-      const carriersFloor=Math.floor(carriersExact);
-      const carriersCeil=Math.ceil(carriersExact);
-      const carriersRec=Math.max( (targetCommission>0?1:0), carriersCeil );
+      // 2) Fixed totals and basis
+      const totals = calcFixedTotals();
+      const basis = ($('#beBasis')?.value || 'accrual');
+      const fixedBase = basis === 'cash' ? totals.cashThisMonth : totals.monthlyTotal;
+      const basisText = basis==='cash' ? 'Basis: Cash (due this month)' : 'Basis: Accrual (monthlyised)';
 
-      // 3) Totals at recommended carriers
-      const totalRev = baseRevPerCarrier * carriersRec; // total Avenor revenue from our leads
-      const aboveAmt = Math.max(0, totalRev - threshold);
-      const commission = aboveAmt * rate; // Vantalos commission
-
-      // 4) Funnel → contacts required
+      // 3) Funnel → contacts per active
       const conv = pCE*pEO*pOA;
       const contactsPerActive = conv>0 ? (1/conv)*(1+buffer) : Infinity;
-      const contactsNeeded = isFinite(contactsPerActive) ? Math.ceil(contactsPerActive * carriersRec) : 0;
 
-      // 5) Costs (fixed + variable) — use totals only (no list rebuild)
-      const {monthlyTotal:fixedMonthly} = calcFixedTotals();
-      // Calls
+      // 4) Variable costs
       const costCallAttempt = parseFloat(els.costCallAttempt.value)||0;
       const attemptsPerReach = parseFloat(els.attemptsPerReach.value)||1;
       const costPerReach = costCallAttempt * attemptsPerReach;
-      const costCallsTotal = contactsNeeded * costCallAttempt;
-      // Email
       const costEmailSend = parseFloat(els.costEmailSend.value)||0;
       const sendsPerProspect = parseInt(els.sendsPerProspect.value)||1;
       const costEmailPerContact = costEmailSend * sendsPerProspect;
-      const costEmailTotal = contactsNeeded * costEmailPerContact;
 
-      // 6) Breakeven contacts — search
+      // Helper to compute recommended carriers & contacts for a given commission target
+      function carriersContactsForTarget(T){
+        if(baseRevPerCarrier<=0 || rate<=0) return {carriersRec:0, contactsNeeded:0, totalRev:0, commission:0};
+        const neededTotalRev = threshold + T / rate;
+        const carriersExact = neededTotalRev / baseRevPerCarrier;
+        const carriersRec = Math.max( (T>0?1:0), Math.ceil(carriersExact) );
+        const totalRev = baseRevPerCarrier * carriersRec;
+        const aboveAmt = Math.max(0, totalRev - threshold);
+        const commission = aboveAmt * rate;
+        const contactsNeeded = isFinite(contactsPerActive) ? Math.ceil(contactsPerActive * carriersRec) : 0;
+        return {carriersRec, contactsNeeded, totalRev, commission};
+      }
+
+      // 5) Optional fixed-point: adjusted target adds variable contact cost only (no duplicate fixed)
+      let useAdjusted = $('#autoAdjustBreakeven')?.checked || false;
+      let targetForCalc = targetCommissionBase; // default
+      if(useAdjusted){
+        let adj = targetCommissionBase; const tol=1e-2, maxIters=30;
+        for(let i=0;i<maxIters;i++){
+          const tmp = carriersContactsForTarget(adj);
+          const varCalls = tmp.contactsNeeded * costPerReach;
+          const varEmail = tmp.contactsNeeded * costEmailPerContact;
+          const varMin = Math.min(varCalls, varEmail);
+          const next = targetCommissionBase + varMin;
+          if(Math.abs(next-adj) < tol){ adj = next; break; }
+          adj = next;
+        }
+        targetForCalc = adj;
+      }
+
+      // 6) Solve using chosen target
+      const base = carriersContactsForTarget(targetForCalc);
+      const carriersExactForBase = (threshold + targetForCalc/rate) / (baseRevPerCarrier||1);
+      const carriersFloor=Math.floor(carriersExactForBase);
+      const carriersCeil=Math.ceil(carriersExactForBase);
+
+      // 7) Totals at required contacts
+      const costCallsTotal = base.contactsNeeded * costPerReach; // FIXED: use costPerReach
+      const costEmailTotal = base.contactsNeeded * costEmailPerContact;
+
+      // 8) Breakeven contacts — binary search using chosen fixed base + per-contact var cost
       function commissionFromContacts(N){
         if(!isFinite(contactsPerActive) || contactsPerActive<=0) return 0;
         const carriers = N / contactsPerActive;
@@ -367,36 +454,36 @@
         for(let i=0;i<60;i++){
           const mid=(lo+hi)/2;
           const lhs=commissionFromContacts(mid);
-          const rhs=fixedMonthly + varCost*mid;
+          const rhs=fixedBase + varCost*mid;
           if(lhs>=rhs) hi=mid; else lo=mid;
         }
         return Math.round(hi);
       }
-      const beContactsCalls = solveBreakevenContacts(costCallAttempt);
+      const beContactsCalls = solveBreakevenContacts(costPerReach); // FIXED: per reach cost
       const beContactsEmail = solveBreakevenContacts(costEmailPerContact);
 
-      // 7) Breakeven commission & implied revenue (at current required contacts)
-      const totalCostCalls = fixedMonthly + costCallsTotal;
-      const totalCostEmail = fixedMonthly + costEmailTotal;
+      // 9) Breakeven commission & implied revenue (at current required contacts)
+      const totalCostCalls = fixedBase + costCallsTotal;
+      const totalCostEmail = fixedBase + costEmailTotal;
       const beCommissionUSD = Math.min(totalCostCalls, totalCostEmail);
       const beRevAbove = rate>0 ? (beCommissionUSD / rate) : 0;
       const beTotalRev = threshold + beRevAbove;
 
-      // 8) Update UI
+      // 10) Update UI
       els.revPerCarrierDisplay.textContent = fmt(baseRevPerCarrier);
       els.derivedGross.textContent = fmt(grossPerCarrier) + ' / mo';
       els.whatIfRev.textContent = fmt(whatIfRev) + ' / mo';
-      els.totalAvenorRevenue.textContent = fmt(totalRev);
+      els.totalAvenorRevenue.textContent = fmt(base.totalRev);
 
-      els.commissionOut.textContent = fmt(commission);
-      els.aboveThreshAmount.textContent = fmt(aboveAmt);
-      const eff = totalRev>0 ? (commission/totalRev*100) : 0; els.effectiveRate.textContent = eff.toFixed(2) + '%';
+      els.commissionOut.textContent = fmt(base.commission);
+      els.aboveThreshAmount.textContent = fmt(Math.max(0, base.totalRev - threshold));
+      const eff = base.totalRev>0 ? (base.commission/base.totalRev*100) : 0; els.effectiveRate.textContent = eff.toFixed(2) + '%';
       els.breakevenRevenue.textContent = fmt(beTotalRev);
 
-      els.carriersExact.textContent = carriersExact.toFixed(2);
+      els.carriersExact.textContent = carriersExactForBase.toFixed(2);
       els.carriersFC.textContent = carriersFloor + ' / ' + carriersCeil;
-      els.carriersRec.textContent = String(carriersRec);
-      els.contactsNeeded.textContent = String(contactsNeeded);
+      els.carriersRec.textContent = String(base.carriersRec);
+      els.contactsNeeded.textContent = String(base.contactsNeeded);
 
       els.costPerReach.value = costPerReach.toFixed(4);
       els.costCallsTotal.value = fmt(costCallsTotal);
@@ -409,7 +496,31 @@
       els.beRevAbove.textContent = fmt(beRevAbove);
       els.beTotalRev.textContent = fmt(beTotalRev);
 
-      els.headline.textContent = `${carriersRec} carriers → ${contactsNeeded} contacts • Commission ${fmt(commission)} • Costs (calls) ${fmt(totalCostCalls)} / (email) ${fmt(totalCostEmail)}`;
+      // Summary mini-cards
+      const setText = (id, v) => { const el = document.getElementById(id); if(el) el.textContent = v; };
+      setText('sumCarriersRec', String(base.carriersRec));
+      setText('sumContactsNeeded', String(base.contactsNeeded));
+      setText('sumCommission', fmt(base.commission));
+      setText('sumCostCalls', fmt(totalCostCalls));
+      setText('sumCostEmail', fmt(totalCostEmail));
+      setText('sumBasis', basisText);
+
+      // Legacy headline string (hidden)
+      els.headline.textContent = `${base.carriersRec} carriers → ${base.contactsNeeded} contacts • Commission ${fmt(base.commission)} • Costs (calls) ${fmt(totalCostCalls)} / (email) ${fmt(totalCostEmail)} • ${basisText}`;
+
+      // Basis notes + active/inactive emphasis
+      const fmItem = els.fixedMonthly?.parentElement?.parentElement; // container cell
+      const fcItem = els.fixedThisMonth?.parentElement?.parentElement;
+      if (fmItem && fcItem) {
+        if (basis === 'accrual') { fmItem.classList.add('active-total'); fmItem.classList.remove('inactive-total'); fcItem.classList.add('inactive-total'); fcItem.classList.remove('active-total'); }
+        else { fcItem.classList.add('active-total'); fcItem.classList.remove('inactive-total'); fmItem.classList.add('inactive-total'); fmItem.classList.remove('active-total'); }
+      }
+      const fb = $('#fixedBasisNote'); if(fb){ fb.textContent = basis==='accrual' ? 'Using Monthlyised total for breakeven; Cash outflow this month is informational only.' : 'Using Cash outflow this month for breakeven; Monthlyised total is informational only.'; }
+      const brn = $('#basisNoteBR'); if(brn){ brn.textContent = 'Assumes lower-cost path (calls vs email). ' + basisText; }
+
+      // Dynamic threshold label with currency symbol
+      const sym = $('#currency').value === 'GBP' ? '£' : '$';
+      const thrLab = $('#aboveThreshLabel'); if(thrLab){ thrLab.textContent = `Revenue above ${sym}${threshold.toLocaleString()}`; }
     }
 
     function calc(){ compute(); }
@@ -424,8 +535,10 @@
     if(els.resetFixed){ els.resetFixed.addEventListener('click',()=>{ fixed=[{name:'Operations baseline', cadence:'monthly', amountUSD:50, paidThisMonth:true}]; renderFixed(); if(typeof calc==='function') calc(); }); }
 
     // Export / import / reset
+    const STATE_KEY='commission_planner_final', STATE_VER=2;
     function snapshot(){
       return {
+        __v:STATE_VER,
         revTypical:+els.revTypical.value, revGood:+els.revGood.value, useGood:els.useGood.value,
         avenorPct:+els.avenorPct.value, avenorPctWhatIf:+els.avenorPctWhatIf.value,
         threshold:+els.threshold.value, rate:+els.rate.value, targetCommission:+els.targetCommission.value,
@@ -433,11 +546,14 @@
         fixed,
         costCallAttempt:+els.costCallAttempt.value, attemptsPerReach:+els.attemptsPerReach.value,
         costEmailSend:+els.costEmailSend.value, sendsPerProspect:+els.sendsPerProspect.value,
-        currency:$('#currency').value, fx:+$('#fx').value
+        currency:$('#currency').value, fx:+$('#fx').value,
+        beBasis: $('#beBasis').value,
+        autoAdjust: $('#autoAdjustBreakeven')?.checked ?? false
       };
     }
     function load(state){
       if(!state) return;
+      if(state.__v!==STATE_VER){ localStorage.removeItem(STATE_KEY); }
       els.revTypical.value = state.revTypical ?? 800;
       els.revGood.value = state.revGood ?? 1000;
       els.useGood.value = state.useGood ?? 'no';
@@ -454,6 +570,8 @@
       els.sendsPerProspect.value = state.sendsPerProspect ?? 2;
       $('#currency').value = state.currency ?? 'USD';
       $('#fx').value = state.fx ?? 0.78;
+      $('#beBasis').value = state.beBasis ?? 'accrual';
+      const a = $('#autoAdjustBreakeven'); if(a) a.checked = !!(state.autoAdjust);
       renderFixed(); calc();
     }
 
@@ -469,14 +587,14 @@
       inp.onchange = ()=>{ const file = inp.files[0]; if(!file) return; const fr = new FileReader(); fr.onload = ()=>{ try{ load(JSON.parse(fr.result)); } catch(e){ alert('Invalid JSON'); } }; fr.readAsText(file); };
       inp.click();
     });
-    $('#resetAll').addEventListener('click', ()=>{ localStorage.removeItem('commission_planner_final'); location.reload(); });
+    $('#resetAll').addEventListener('click', ()=>{ localStorage.removeItem(STATE_KEY); location.reload(); });
 
     // Persist
-    function persist(){ localStorage.setItem('commission_planner_final', JSON.stringify(snapshot())); }
+    function persist(){ localStorage.setItem(STATE_KEY, JSON.stringify(snapshot())); }
     window.addEventListener('beforeunload', persist);
 
     // Init
-    const saved = localStorage.getItem('commission_planner_final');
+    const saved = localStorage.getItem(STATE_KEY);
     if(saved){ try{ load(JSON.parse(saved)); } catch(e){ renderFixed(); calc(); } }
     else { renderFixed(); calc(); }
   })();
