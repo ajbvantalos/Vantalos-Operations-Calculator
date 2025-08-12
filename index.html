@@ -133,11 +133,15 @@
             <div class="body">
               <h3>Fixed</h3>
               <div id="fixedList" class="list" aria-live="polite"></div>
-              <div style="display:flex;gap:8px;margin:8px 0 12px"><button class="btn" id="addFixed">+ Add item</button><button class="btn ghost" id="resetFixed">Reset → $50 default</button></div>
+              <div style="display:flex;gap:8px;margin:8px 0 12px">
+                <button class="btn" id="addFixed">+ Add item</button>
+                <button class="btn ghost" id="resetFixed">Reset → $50 default</button>
+              </div>
               <div class="grid-2">
                 <div class="item"><span>Monthlyized total</span><span class="mono" id="fixedMonthly"></span></div>
                 <div class="item"><span>Cash outflow this month</span><span class="mono" id="fixedThisMonth"></span></div>
               </div>
+          
               <div style="height:10px"></div>
               <h3>Variable — AI Calls</h3>
               <div class="grid-2">
@@ -146,6 +150,7 @@
                 <div><label>Cost per reached human (auto)</label><input id="costPerReach" type="number" disabled></div>
                 <div><label>Cost for required contacts (auto)</label><input id="costCallsTotal" type="text" disabled></div>
               </div>
+          
               <h3 style="margin-top:10px">Variable — Email</h3>
               <div class="grid-2">
                 <div><label for="costEmailSend">Cost per email send ($)</label><input id="costEmailSend" type="number" step="0.0001" value="0.003"></div>
@@ -154,7 +159,7 @@
                 <div><label>Cost for required contacts (auto)</label><input id="costEmailTotal" type="text" disabled></div>
               </div>
             </div>
-          </div>
+          </div>          
         </div>
       </aside>
 
@@ -256,29 +261,77 @@
     };
 
     // Fixed list model
-    let fixed=[{name:'Operations baseline', cadence:'monthly', amountUSD:50, paidThisMonth:true}];
-    function renderFixed(){
-      els.fixedList.innerHTML=''; let monthly=0,cash=0;
-      fixed.forEach((f,i)=>{
-        const mult=f.cadence==='annual'?1/12:1; monthly+=f.amountUSD*mult; cash+=f.paidThisMonth?f.amountUSD:0;
-        const row=document.createElement('div'); row.className='item';
-        row.innerHTML=`
-          <input aria-label="Fixed item name" style="flex:2" value="${f.name}">
-          <select aria-label="Billing cadence" style="flex:1"><option ${f.cadence==='monthly'?'selected':''} value="monthly">monthly</option><option ${f.cadence==='annual'?'selected':''} value="annual">annual</option></select>
-          <input aria-label="Amount (USD)" style="flex:1" type="number" step="0.01" value="${f.amountUSD}">
-          <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${f.paidThisMonth?'checked':''}><span class="mono">cash</span></label>
-          <button class="btn ghost" data-del="${i}">✕</button>`;
-        const [nameEl,cadEl,amtEl,chkEl,delBtn]=row.querySelectorAll('input,select,button');
-        nameEl.addEventListener('input',()=>{f.name=nameEl.value; calc();});
-        cadEl.addEventListener('change',()=>{f.cadence=cadEl.value; calc();});
-        amtEl.addEventListener('input',()=>{f.amountUSD=parseFloat(amtEl.value)||0; calc();});
-        chkEl.addEventListener('change',()=>{f.paidThisMonth=chkEl.checked; calc();});
-        delBtn.addEventListener('click',()=>{fixed.splice(i,1); renderFixed(); calc();});
-        els.fixedList.appendChild(row);
-      });
-      els.fixedMonthly.textContent=fmt(monthly); els.fixedThisMonth.textContent=fmt(cash);
-      return {monthlyTotal:monthly, cashThisMonth:cash};
-    }
+    // === FIXED COSTS: model + renderer ===
+let fixed = [
+  { name: 'Operations baseline', cadence: 'monthly', amountUSD: 50, paidThisMonth: true }
+];
+
+function renderFixed(){
+  const list = document.getElementById('fixedList');
+  const fixedMonthlyEl = document.getElementById('fixedMonthly');
+  const fixedThisMonthEl = document.getElementById('fixedThisMonth');
+  if(!list) return { monthlyTotal:0, cashThisMonth:0 };
+
+  list.innerHTML = '';
+  let monthly = 0, cash = 0;
+
+  fixed.forEach((f, i) => {
+    const mult = f.cadence === 'annual' ? 1/12 : 1;
+    monthly += (Number(f.amountUSD)||0) * mult;
+    cash += f.paidThisMonth ? (Number(f.amountUSD)||0) : 0;
+
+    const row = document.createElement('div');
+    row.className = 'item';
+    row.innerHTML = `
+      <input aria-label="Fixed item name" style="flex:2" value="${f.name}">
+      <select aria-label="Billing cadence" style="flex:1">
+        <option value="monthly" ${f.cadence==='monthly'?'selected':''}>monthly</option>
+        <option value="annual" ${f.cadence==='annual'?'selected':''}>annual</option>
+      </select>
+      <input aria-label="Amount (USD)" style="flex:1" type="number" step="0.01" value="${f.amountUSD}">
+      <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" ${f.paidThisMonth?'checked':''}><span class="mono">cash</span></label>
+      <button class="btn ghost" title="Remove">✕</button>
+    `;
+
+    const controls = row.querySelectorAll('input,select,button');
+    const nameEl = controls[0];
+    const cadEl  = controls[1];
+    const amtEl  = controls[2];
+    const chkEl  = controls[3];
+    const delBtn = controls[4];
+
+    nameEl.addEventListener('input', () => { f.name = nameEl.value; if(typeof calc==='function') calc(); });
+    cadEl.addEventListener('change', () => { f.cadence = cadEl.value; if(typeof calc==='function') calc(); });
+    amtEl.addEventListener('input', () => { f.amountUSD = parseFloat(amtEl.value)||0; if(typeof calc==='function') calc(); });
+    chkEl.addEventListener('change', () => { f.paidThisMonth = chkEl.checked; if(typeof calc==='function') calc(); });
+    delBtn.addEventListener('click', () => { fixed.splice(i,1); renderFixed(); if(typeof calc==='function') calc(); });
+
+    list.appendChild(row);
+  });
+
+  const _fmt = n => (typeof fmt==='function' ? fmt(n) : `$${(Number(n)||0).toFixed(2)}`);
+  if (fixedMonthlyEl) fixedMonthlyEl.textContent = _fmt(monthly);
+  if (fixedThisMonthEl) fixedThisMonthEl.textContent = _fmt(cash);
+
+  return { monthlyTotal: monthly, cashThisMonth: cash };
+}
+// === FIXED COSTS: actions ===
+(function(){
+  const addBtn = document.getElementById('addFixed');
+  const resetBtn = document.getElementById('resetFixed');
+
+  if (addBtn) addBtn.addEventListener('click', () => {
+    fixed.push({ name: 'New item', cadence: 'monthly', amountUSD: 0, paidThisMonth: false });
+    renderFixed();
+    if (typeof calc==='function') calc();
+  });
+
+  if (resetBtn) resetBtn.addEventListener('click', () => {
+    fixed = [{ name: 'Operations baseline', cadence: 'monthly', amountUSD: 50, paidThisMonth: true }];
+    renderFixed();
+    if (typeof calc==='function') calc();
+  });
+})();
 
     // Core math
     function compute(){
